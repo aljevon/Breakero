@@ -13,7 +13,7 @@ LDFLAGS     := -s -w
 BUILDFLAGS  := -trimpath -ldflags "$(LDFLAGS)"
 DIST        := dist
 
-.PHONY: all build test vet fmt clean release run
+.PHONY: all build test vet fmt clean release run icons
 
 all: build
 
@@ -34,6 +34,14 @@ run: build
 
 clean:
 	rm -rf $(BINARY) $(DIST)
+
+# Regenerate the Windows exe icon and version resource from assets/breakero.ico.
+# The generated .syso files are committed, so you only need this after changing
+# the icon or version. Requires network access to fetch goversioninfo.
+GOVERSIONINFO := go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.7.0
+icons:
+	$(GOVERSIONINFO) -icon assets/breakero.ico -64      -o cmd/breakero/resource_windows_amd64.syso cmd/breakero/versioninfo.json
+	$(GOVERSIONINFO) -icon assets/breakero.ico -arm -64 -o cmd/breakero/resource_windows_arm64.syso cmd/breakero/versioninfo.json
 
 # Cross-compile static, dependency-free binaries for every supported platform.
 release: clean

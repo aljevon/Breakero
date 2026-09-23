@@ -59,6 +59,8 @@ func run() int {
 		fList       = flag.Bool("list-checks", false, "List available check modules and exit")
 		fExplain    = flag.Bool("explain", false, "Explain what each module does (great for learning) and exit")
 		fVersion    = flag.Bool("version", false, "Print version and exit")
+		fInstall    = flag.Bool("install", false, "Install Breakero on this machine (copy to a standard folder and add it to PATH)")
+		fUninstall  = flag.Bool("uninstall", false, "Remove an install created by -install")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -75,11 +77,24 @@ func run() int {
 		explainChecks()
 		return 0
 	}
+	if *fUninstall {
+		return doUninstall()
+	}
+	if *fInstall {
+		return doInstall()
+	}
 
 	// Track which flags the user explicitly set, so we only override config
 	// values that were actually provided on the command line.
 	set := map[string]bool{}
 	flag.Visit(func(f *flag.Flag) { set[f.Name] = true })
+
+	// Platform first-run handling. On Windows this installs the exe on first
+	// run and shows a welcome screen when it was double-clicked. On other
+	// systems it does nothing.
+	if code, handled := platformStartup(set); handled {
+		return code
+	}
 
 	// Load config from file, or start from an empty one.
 	var cfg *config.Config

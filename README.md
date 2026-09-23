@@ -89,6 +89,8 @@ Windows, from PowerShell in your downloads folder:
 .\breakero-windows-amd64.exe -version
 ```
 
+On Windows you can also just **double-click the exe**. The first time it runs it copies itself into your user folder and adds that folder to your PATH, so from then on `breakero` works in any terminal. Run it again and it notices it's already set up and skips straight past. Done with it? `breakero -uninstall` removes it. The exe carries the Breakero icon, so it's easy to spot in Explorer.
+
 Linux or macOS, mark it runnable first:
 
 ```bash
@@ -216,6 +218,7 @@ A few fields worth explaining:
 | `-html` / `-json` | Write a report to a file |
 | `-explain` | Talk through each module. Good for learning |
 | `-list-checks` | Print the module ids |
+| `-install` / `-uninstall` | Set up (or remove) Breakero on this machine |
 
 `breakero -h` has the rest.
 
