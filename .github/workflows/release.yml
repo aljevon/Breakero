@@ -1,0 +1,110 @@
+name: build-and-release
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version tag (e.g. v1.0.0)"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: gofmt
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then echo "Unformatted files:"; echo "$out"; exit 1; fi
+      - run: go vet ./...
+      - run: go test ./...
+
+  build:
+    name: Cross-compile
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: Build all platforms
+        run: make release
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: breakero-binaries
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Build binaries
+        run: make release
+
+      - name: Package archives, installer and checksums
+        run: |
+          set -eu
+          VERSION="${RELEASE_TAG}"
+          cd dist
+          # Per-platform archives that bundle the binary with docs.
+          for f in breakero-*; do
+            base="${f%.exe}"
+            cp ../README.md ../LICENSE ../AUTHORIZATION.md .
+            if [ "${f%.exe}" != "$f" ]; then
+              zip -q "${base}.zip" "$f" README.md LICENSE AUTHORIZATION.md
+            else
+              tar -czf "${base}.tar.gz" "$f" README.md LICENSE AUTHORIZATION.md
+            fi
+          done
+          rm -f README.md LICENSE AUTHORIZATION.md
+          # Ship the universal installer alongside the binaries.
+          cp ../install.sh .
+          cp ../install.ps1 .
+          # Checksums for everything.
+          sha256sum breakero-* install.sh install.ps1 > checksums.txt
+          echo "Release contents:"; ls -lh
+
+      - name: Publish to GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -eu
+          cd dist
+          # If we're re-running, drop the previous release and its tag first.
+          gh release delete "$RELEASE_TAG" --yes --cleanup-tag 2>/dev/null || true
+          # Clean up any leftover draft release from an earlier attempt.
+          for id in $(gh api "repos/$REPO/releases" \
+              --jq ".[] | select(.draft==true and (.tag_name==\"$RELEASE_TAG\" or .name==\"Breakero $RELEASE_TAG\")) | .id"); do
+            gh api -X DELETE "repos/$REPO/releases/$id" 2>/dev/null || true
+          done
+          # Create a published (non-draft) release, tagged at this commit.
+          gh release create "$RELEASE_TAG" \
+            breakero-* install.sh install.ps1 checksums.txt \
+            --title "Breakero $RELEASE_TAG" \
+            --target "$GITHUB_SHA" \
+            --generate-notes

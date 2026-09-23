@@ -1,0 +1,16 @@
+# Build artifacts
+/breakero
+/breakero.exe
+/dist/
+*.exe
+
+# Reports produced by scans
+*-report.html
+*-report.json
+breakero-report.*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

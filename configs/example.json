@@ -1,0 +1,51 @@
+{
+  "authorized": true,
+  "base_url": "https://app.example.com",
+
+  "scope_include": ["app.example.com", "*.api.example.com"],
+  "scope_exclude": ["public.example.com"],
+
+  "rate_per_second": 5,
+  "max_requests": 3000,
+  "timeout_seconds": 15,
+  "follow_redirects": false,
+  "insecure_tls": false,
+  "allow_state_changing": false,
+
+  "roles": [
+    {
+      "name": "anonymous",
+      "level": 0
+    },
+    {
+      "name": "alice",
+      "level": 10,
+      "cookie": "session=ALICE_SESSION_COOKIE_HERE",
+      "headers": { "Authorization": "Bearer ALICE_JWT_HERE" },
+      "owned_ids": ["1001"]
+    },
+    {
+      "name": "bob",
+      "level": 10,
+      "cookie": "session=BOB_SESSION_COOKIE_HERE",
+      "owned_ids": ["1002"]
+    },
+    {
+      "name": "admin",
+      "level": 100,
+      "cookie": "session=ADMIN_SESSION_COOKIE_HERE"
+    }
+  ],
+
+  "endpoints": [
+    { "path": "/admin",                "method": "GET", "min_role": "admin", "sensitive": true },
+    { "path": "/admin/users",          "method": "GET", "min_role": "admin", "sensitive": true },
+    { "path": "/api/v1/account",       "method": "GET", "min_role": "alice", "id_param": "id" },
+    { "path": "/api/v1/orders/{id}",   "method": "GET", "min_role": "alice" },
+    { "path": "/api/v1/reports",       "method": "GET", "min_role": "admin", "sensitive": true },
+    { "path": "/download",             "method": "GET", "id_param": "file" }
+  ],
+
+  "html_report": "breakero-report.html",
+  "json_report": "breakero-report.json"
+}
