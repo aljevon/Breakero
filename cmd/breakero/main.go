@@ -29,7 +29,7 @@ import (
 	"github.com/aljevon/breakero/internal/scope"
 )
 
-const version = "1.0.0"
+const version = "1.1.0"
 
 func main() {
 	os.Exit(run())
@@ -59,8 +59,7 @@ func run() int {
 		fList       = flag.Bool("list-checks", false, "List available check modules and exit")
 		fExplain    = flag.Bool("explain", false, "Explain what each module does (great for learning) and exit")
 		fVersion    = flag.Bool("version", false, "Print version and exit")
-		fInstall    = flag.Bool("install", false, "Install Breakero on this machine (copy to a standard folder and add it to PATH)")
-		fUninstall  = flag.Bool("uninstall", false, "Remove an install created by -install")
+		fGui        = flag.Bool("gui", false, "Open the Breakero app (graphical UI in your browser)")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -77,23 +76,17 @@ func run() int {
 		explainChecks()
 		return 0
 	}
-	if *fUninstall {
-		return doUninstall()
-	}
-	if *fInstall {
-		return doInstall()
-	}
 
 	// Track which flags the user explicitly set, so we only override config
 	// values that were actually provided on the command line.
 	set := map[string]bool{}
 	flag.Visit(func(f *flag.Flag) { set[f.Name] = true })
 
-	// Platform first-run handling. On Windows this installs the exe on first
-	// run and shows a welcome screen when it was double-clicked. On other
-	// systems it does nothing.
-	if code, handled := platformStartup(set); handled {
-		return code
+	// Open the graphical app when asked for it, or when the exe was launched
+	// with no arguments outside a terminal (a double-click). Everything else
+	// runs as the command-line tool.
+	if *fGui || (len(set) == 0 && len(flag.Args()) == 0 && !interactiveTerminal()) {
+		return launchGUI()
 	}
 
 	// Load config from file, or start from an empty one.
@@ -333,10 +326,12 @@ func usage() {
 	fmt.Fprintf(os.Stderr, `Breakero %s — OWASP A01:2025 Broken Access Control tester (authorized use only)
 
 USAGE:
+  breakero                       open the app (graphical UI in your browser)
   breakero -url https://target.example -i-am-authorized [options]
   breakero -config scan.json
 
 QUICK START (beginner):
+  breakero -gui                  point-and-click, no flags to remember
   breakero -url https://juice-shop.local -i-am-authorized -html report.html
 
 COMMON OPTIONS:

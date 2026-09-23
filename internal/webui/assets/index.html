@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Breakero</title>
+<style>
+:root{
+  --bg:#0e1016; --panel:#161923; --panel2:#1c2030; --line:#272c3b;
+  --ink:#e9ebf2; --muted:#98a0b3; --faint:#6b7284;
+  --indigo:#6366f1; --magenta:#c026d3; --accent:#7c7cf6;
+  --crit:#d946ef; --high:#f0506a; --med:#f5a524; --low:#22b8cf; --info:#8b95a7;
+  --ok:#31c48d;
+  --shadow:0 18px 50px rgba(0,0,0,.45);
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:radial-gradient(1200px 600px at 80% -10%, rgba(99,102,241,.10), transparent 60%),
+             radial-gradient(1000px 500px at 10% 110%, rgba(192,38,211,.08), transparent 55%),
+             var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px;margin:0 auto;padding:28px 18px 80px}
+
+/* header */
+header{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.logo{width:44px;height:44px;flex:0 0 auto;filter:drop-shadow(0 4px 10px rgba(124,124,246,.35))}
+.brand h1{margin:0;font-size:22px;letter-spacing:.2px;font-weight:800}
+.brand p{margin:1px 0 0;color:var(--muted);font-size:12.5px;letter-spacing:.3px}
+header .spacer{flex:1}
+.ver{color:var(--faint);font-size:12px;margin-right:6px}
+
+/* panels */
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow)}
+.scan{padding:20px}
+.field{margin:0 0 14px}
+label.lab{display:block;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--accent);
+  font-weight:700;margin:0 0 7px}
+.urlrow{display:flex;gap:10px}
+input[type=text],input[type=number],input[type=password]{
+  width:100%;background:#0c0e15;border:1px solid var(--line);color:var(--ink);
+  border-radius:11px;padding:13px 14px;font-size:15px;outline:none;transition:border .15s,box-shadow .15s}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,124,246,.18)}
+input::placeholder{color:#5a6072}
+
+.btn{border:0;border-radius:11px;padding:13px 20px;font-size:15px;font-weight:700;color:#fff;
+  cursor:pointer;transition:transform .06s ease, filter .15s, opacity .15s;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(135deg,var(--indigo),var(--magenta))}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:#0c0e15;border:1px solid var(--line);color:var(--ink);font-weight:600}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:grayscale(.2)}
+.btn.sm{padding:9px 13px;font-size:13px}
+
+/* auth row */
+.auth{display:flex;align-items:flex-start;gap:10px;background:#0c0e15;border:1px solid var(--line);
+  border-radius:11px;padding:12px 14px}
+.auth input{margin-top:2px;width:17px;height:17px;accent-color:var(--indigo);flex:0 0 auto;cursor:pointer}
+.auth .t{font-size:13px;color:var(--muted)}
+.auth .t b{color:var(--ink)}
+
+.scope-note{color:var(--faint);font-size:12px;margin-top:7px}
+.scope-note b{color:var(--muted)}
+
+/* advanced */
+details.adv{margin-top:6px;border-top:1px dashed var(--line);padding-top:12px}
+details.adv summary{cursor:pointer;color:var(--muted);font-size:13px;list-style:none;user-select:none}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary::before{content:"▸";display:inline-block;margin-right:7px;transition:transform .15s;color:var(--accent)}
+details.adv[open] summary::before{transform:rotate(90deg)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}.urlrow{flex-direction:column}}
+.mini label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--faint);margin-bottom:5px}
+
+/* toggle chips */
+.checks{margin-top:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:#0c0e15;border:1px solid var(--line);
+  border-radius:999px;padding:7px 12px;font-size:12.5px;cursor:pointer;user-select:none;transition:.15s}
+.chip:hover{border-color:var(--accent)}
+.chip input{display:none}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:#39405400;border:1.5px solid var(--faint);transition:.15s}
+.chip.on{border-color:var(--accent);background:rgba(124,124,246,.12)}
+.chip.on .dot{background:var(--accent);border-color:var(--accent)}
+
+/* toolbar under scan */
+.run{display:flex;align-items:center;gap:12px;margin-top:16px}
+.run .spacer{flex:1}
+
+/* progress */
+.prog{height:6px;background:#0c0e15;border-radius:999px;overflow:hidden;margin-top:16px;display:none}
+.prog.on{display:block}
+.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--indigo),var(--magenta));
+  transition:width .3s ease}
+.status{color:var(--muted);font-size:12.5px;margin-top:9px;min-height:16px}
+
+/* results */
+.results{margin-top:22px;display:none}
+.results.on{display:block}
+.summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.pill{border-radius:999px;padding:5px 12px;font-size:12px;font-weight:800;color:#0b0d12}
+.pill.zero{opacity:.4}
+.p-crit{background:var(--crit);color:#fff}.p-high{background:var(--high);color:#fff}
+.p-med{background:var(--med)}.p-low{background:var(--low)}.p-info{background:var(--info)}
+.metrics{color:var(--muted);font-size:12.5px;margin:2px 0 16px}
+
+.finding{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;
+  background:var(--panel);margin-bottom:10px;overflow:hidden}
+.b-crit{border-left-color:var(--crit)}.b-high{border-left-color:var(--high)}
+.b-med{border-left-color:var(--med)}.b-low{border-left-color:var(--low)}.b-info{border-left-color:var(--info)}
+.finding summary{cursor:pointer;list-style:none;padding:13px 15px;display:flex;align-items:center;gap:11px}
+.finding summary::-webkit-details-marker{display:none}
+.sev{font-size:10.5px;font-weight:800;border-radius:6px;padding:3px 7px;letter-spacing:.4px}
+.s-crit{background:var(--crit);color:#fff}.s-high{background:var(--high);color:#fff}
+.s-med{background:var(--med);color:#0b0d12}.s-low{background:var(--low);color:#0b0d12}.s-info{background:var(--info);color:#0b0d12}
+.finding .ttl{font-weight:600;flex:1}
+.finding .exp{color:var(--faint);transition:transform .15s;font-size:12px}
+.finding[open] .exp{transform:rotate(90deg)}
+.body{padding:0 15px 15px 15px;border-top:1px solid var(--line)}
+.body .urlline{margin:12px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+  background:#0c0e15;border:1px solid var(--line);border-radius:8px;padding:8px 10px;word-break:break-all;color:#c9cde0}
+.kv{margin:11px 0}
+.kv .k{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);font-weight:700;margin-bottom:3px}
+.kv .v{color:var(--ink)}
+.conf{color:var(--faint);font-size:11.5px;margin-top:10px}
+
+.empty{color:var(--muted);text-align:center;padding:26px;border:1px dashed var(--line);border-radius:12px}
+.coverage{margin-top:20px}
+.coverage h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);margin:0 0 8px}
+.cov-item{display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--muted);padding:5px 0;border-bottom:1px solid var(--line)}
+.cov-item code{color:var(--ink)}
+.cov-item .n{margin-left:auto;color:var(--faint)}
+
+.foot{color:var(--faint);font-size:12px;text-align:center;margin-top:26px;line-height:1.7}
+.foot a{color:var(--accent);text-decoration:none}
+
+/* tooltip */
+#tip{position:fixed;z-index:99;max-width:280px;background:#05070c;color:#e9ebf2;border:1px solid var(--line);
+  border-radius:9px;padding:9px 11px;font-size:12px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.55);
+  pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+#tip.on{opacity:1;transform:translateY(0)}
+#tip b{color:var(--accent)}
+
+.err{background:rgba(240,80,106,.12);border:1px solid var(--high);color:#ffd7dd;border-radius:11px;
+  padding:12px 14px;font-size:13.5px;margin-top:14px;display:none}
+.err.on{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="logo" viewBox="0 0 256 256" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="g" x1="60" y1="36" x2="196" y2="220" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#6366f1"/><stop offset="1" stop-color="#c026d3"/></linearGradient>
+        <linearGradient id="c" x1="128" y1="60" x2="128" y2="196" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#f8fafc"/><stop offset="1" stop-color="#f5a524"/></linearGradient>
+      </defs>
+      <path d="M128 40 L196 66 V128 C196 172 166 202 128 218 C90 202 60 172 60 128 V66 Z" fill="url(#g)" opacity=".16"/>
+      <path d="M128 40 L196 66 V128 C196 172 166 202 128 218 C90 202 60 172 60 128 V66 Z" fill="none" stroke="url(#g)" stroke-width="7" stroke-linejoin="round"/>
+      <circle cx="128" cy="116" r="19" fill="none" stroke="url(#g)" stroke-width="7"/>
+      <path d="M128 132 L120 168 H136 Z" fill="url(#g)"/>
+      <path d="M150 52 L108 116 L134 122 L96 200" fill="none" stroke="url(#c)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="brand">
+      <h1>Breakero</h1>
+      <p>Broken Access Control Scanner · OWASP A01:2025</p>
+    </div>
+    <div class="spacer"></div>
+    <span class="ver" id="ver"></span>
+    <button class="btn ghost sm" id="quit" data-tip="<b>Quit</b> Close Breakero and stop the local server. You can also just close this tab.">Quit</button>
+  </header>
+
+  <div class="card scan">
+    <div class="field">
+      <label class="lab" for="url">Target URL</label>
+      <div class="urlrow">
+        <input id="url" type="text" placeholder="https://your-target.example" autocomplete="off" spellcheck="false"
+          data-tip="<b>Target</b> The website or API you want to test. Only this host gets scanned. Type the full address including https://.">
+        <button class="btn primary" id="scan" disabled
+          data-tip="<b>Scan</b> Start the checks. Enabled once you enter a URL and confirm you're allowed to test it.">Scan</button>
+      </div>
+      <div class="scope-note" id="scopeNote"></div>
+    </div>
+
+    <div class="field">
+      <label class="auth" data-tip="<b>Required</b> Testing a site without written permission is illegal. Tick this to confirm you own the target or are authorized to test it.">
+        <input type="checkbox" id="authz">
+        <span class="t"><b>I have permission to test this target.</b> Breakero won't run until this is checked, and it only touches the host above.</span>
+      </label>
+    </div>
+
+    <div class="checks field">
+      <label class="lab">Checks to run</label>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <details class="adv">
+      <summary data-tip="<b>Advanced</b> Optional settings. The defaults are fine for a first scan.">Advanced options</summary>
+      <div class="grid2">
+        <div class="mini">
+          <label>Requests per second</label>
+          <input type="number" id="rate" value="12" min="1" max="50"
+            data-tip="<b>Speed</b> How fast requests go out. Kept modest so you don't stress the target. Higher = faster but noisier.">
+        </div>
+        <div class="mini">
+          <label>Request budget</label>
+          <input type="number" id="maxreq" value="1500" min="50" step="50"
+            data-tip="<b>Budget</b> A hard cap on total requests. The scan stops when it's reached, so a run can't run away.">
+        </div>
+        <div class="mini" style="grid-column:1/-1">
+          <label>Session cookie (optional)</label>
+          <input type="text" id="cookie" placeholder="session=..." autocomplete="off" spellcheck="false"
+            data-tip="<b>Logged-in scan</b> Paste a cookie to test as a signed-in user. Lets the checks compare what different accounts can reach.">
+        </div>
+        <label class="auth" style="grid-column:1/-1" data-tip="<b>Careful</b> Lets the scan send POST/PUT/PATCH/DELETE. These can change or delete data. Only use it when your permission covers that.">
+          <input type="checkbox" id="active">
+          <span class="t"><b>Allow state-changing requests</b> (POST/PUT/PATCH/DELETE). Off by default.</span>
+        </label>
+      </div>
+    </details>
+
+    <div class="prog" id="prog"><i id="bar"></i></div>
+    <div class="status" id="status"></div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="summary" id="summary"></div>
+    <div class="metrics" id="metrics"></div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button class="btn ghost sm" id="dlHtml" data-tip="<b>HTML report</b> A single, shareable file with every finding explained. Good for tickets.">Download HTML report</button>
+      <button class="btn ghost sm" id="dlJson" data-tip="<b>JSON</b> Machine-readable results for scripting or importing elsewhere.">Download JSON</button>
+    </div>
+    <div id="findings"></div>
+    <div class="coverage" id="coverage"></div>
+  </div>
+
+  <div class="foot">
+    Only test systems you're allowed to test.
+    Reference: <a href="https://top10.owasp.org/2025/A01_2025-Broken_Access_Control/" target="_blank" rel="noopener">OWASP Top 10 2025 — A01</a>
+  </div>
+</div>
+
+<div id="tip"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const token = new URLSearchParams(location.search).get('t') || '';
+const H = {'X-Breakero-Token': token, 'Content-Type':'application/json'};
+const SEV = {4:'crit',3:'high',2:'med',1:'low',0:'info'};
+const SEVNAME = {4:'CRITICAL',3:'HIGH',2:'MEDIUM',1:'LOW',0:'INFO'};
+
+let selected = new Set();
+
+/* ---- tooltip that follows the cursor ---- */
+const tip = $('#tip');
+function showTip(el, e){ tip.innerHTML = el.getAttribute('data-tip'); tip.classList.add('on'); moveTip(e); }
+function moveTip(e){
+  const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
+  let x=e.clientX+pad, y=e.clientY+pad;
+  if(x+w>innerWidth-8) x=e.clientX-w-pad;
+  if(y+h>innerHeight-8) y=e.clientY-h-pad;
+  tip.style.left=x+'px'; tip.style.top=y+'px';
+}
+document.addEventListener('mouseover', e=>{const t=e.target.closest('[data-tip]'); if(t) showTip(t,e);});
+document.addEventListener('mousemove', e=>{ if(tip.classList.contains('on')) moveTip(e); });
+document.addEventListener('mouseout', e=>{ if(e.target.closest('[data-tip]')) tip.classList.remove('on'); });
+
+/* ---- load checks ---- */
+fetch('/api/checks',{headers:H}).then(r=>r.json()).then(d=>{
+  $('#ver').textContent = 'v'+d.version;
+  const box = $('#chips');
+  d.checks.forEach(c=>{
+    selected.add(c.id);
+    const el = document.createElement('label');
+    el.className='chip on'; el.setAttribute('data-tip', '<b>'+c.title+'</b> '+c.teaches);
+    el.innerHTML = '<span class="dot"></span><input type="checkbox" checked value="'+c.id+'">'+c.id;
+    el.querySelector('input').addEventListener('change', ev=>{
+      if(ev.target.checked){selected.add(c.id); el.classList.add('on');}
+      else {selected.delete(c.id); el.classList.remove('on');}
+    });
+    box.appendChild(el);
+  });
+}).catch(()=>{});
+
+/* ---- enable scan when ready ---- */
+function refresh(){
+  const ok = $('#url').value.trim() !== '' && $('#authz').checked;
+  $('#scan').disabled = !ok;
+  const u = $('#url').value.trim();
+  try{ const h=new URL(u).host; $('#scopeNote').innerHTML = h? 'Scope locks to <b>'+h+'</b>. Nothing else is touched.':''; }
+  catch(e){ $('#scopeNote').textContent=''; }
+}
+$('#url').addEventListener('input', refresh);
+$('#authz').addEventListener('change', refresh);
+
+/* ---- run scan ---- */
+let running=false;
+const findings=[];
+$('#scan').addEventListener('click', runScan);
+$('#url').addEventListener('keydown', e=>{ if(e.key==='Enter' && !$('#scan').disabled) runScan(); });
+
+async function runScan(){
+  if(running) return;
+  running=true; findings.length=0;
+  $('#err').classList.remove('on');
+  $('#findings').innerHTML=''; $('#coverage').innerHTML=''; $('#summary').innerHTML=''; $('#metrics').textContent='';
+  $('#results').classList.remove('on');
+  $('#scan').disabled=true; $('#scan').textContent='Scanning…';
+  $('#prog').classList.add('on'); $('#bar').style.width='6%';
+  $('#status').textContent='Starting…';
+
+  let total=1, done=0;
+  const body = JSON.stringify({
+    url:$('#url').value.trim(), authorized:$('#authz').checked,
+    rate:parseFloat($('#rate').value)||12, max_requests:parseInt($('#maxreq').value)||1500,
+    active:$('#active').checked, cookie:$('#cookie').value.trim(),
+    checks:[...selected]
+  });
+
+  try{
+    const res = await fetch('/api/scan',{method:'POST',headers:H,body});
+    const reader = res.body.getReader(); const dec=new TextDecoder(); let buf='';
+    while(true){
+      const {value,done:rdone} = await reader.read(); if(rdone) break;
+      buf += dec.decode(value,{stream:true});
+      let nl; while((nl=buf.indexOf('\n'))>=0){
+        const line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1);
+        if(!line) continue;
+        const ev=JSON.parse(line); handleEvent(ev);
+        if(ev.type==='start'){ total=ev.total||1; $('#results').classList.add('on'); }
+        if(ev.type==='check'){ done++; $('#bar').style.width=Math.min(96,6+done/total*90)+'%'; $('#status').textContent='Checked '+ev.id+' ('+done+'/'+total+')'; }
+      }
+    }
+  }catch(err){ showError('Could not run the scan: '+err.message); }
+
+  $('#bar').style.width='100%';
+  setTimeout(()=>$('#prog').classList.remove('on'), 500);
+  $('#scan').textContent='Scan'; running=false; refresh();
+}
+
+function handleEvent(ev){
+  if(ev.type==='error'){ showError(ev.message); return; }
+  if(ev.type==='finding'){ findings.push(ev.finding); renderFindings(); }
+  if(ev.type==='check'){ addCoverage(ev); }
+  if(ev.type==='done'){ renderSummary(ev); $('#status').textContent='Done. '+ev.total+' finding'+(ev.total===1?'':'s')+'.'; }
+}
+
+function showError(m){ const e=$('#err'); e.textContent=m; e.classList.add('on'); $('#status').textContent=''; }
+
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function renderFindings(){
+  const box=$('#findings');
+  const sorted=[...findings].sort((a,b)=> (b.severity-a.severity));
+  if(sorted.length===0){ box.innerHTML='<div class="empty">No access-control issues from the checks that ran. That is not a clean bill of health, just that these tests did not fire.</div>'; return; }
+  box.innerHTML = sorted.map((f,i)=>{
+    const s=SEV[f.severity]||'info';
+    return `<details class="finding b-${s}">
+      <summary><span class="sev s-${s}">${SEVNAME[f.severity]||'INFO'}</span>
+        <span class="ttl">${esc(f.title)}</span><span class="exp">▸</span></summary>
+      <div class="body">
+        ${f.url?`<div class="urlline">${esc((f.method||'GET')+' '+f.url)}</div>`:''}
+        ${f.what_it_means?`<div class="kv"><span class="k">What it means</span><span class="v">${esc(f.what_it_means)}</span></div>`:''}
+        ${f.evidence?`<div class="kv"><span class="k">Evidence</span><span class="v">${esc(f.evidence)}</span></div>`:''}
+        ${f.remediation?`<div class="kv"><span class="k">How to fix</span><span class="v">${esc(f.remediation)}</span></div>`:''}
+        <div class="conf">Confidence: ${esc(f.confidence||'')} · Module: ${esc(f.check||'')}</div>
+      </div></details>`;
+  }).join('');
+}
+
+const coverage=[];
+function addCoverage(ev){ coverage.push(ev); const box=$('#coverage');
+  box.innerHTML='<h3>Coverage — what was tested</h3>'+coverage.map(c=>
+    `<div class="cov-item"><code>${esc(c.id)}</code> ${esc(c.title)}<span class="n">${c.err?('error'):(c.count+' finding'+(c.count===1?'':'s'))}</span></div>`).join('');
+}
+
+function renderSummary(ev){
+  const s=ev.summary||{};
+  const order=[['critical','crit'],['high','high'],['medium','med'],['low','low'],['info','info']];
+  $('#summary').innerHTML = order.map(([k,cls])=>{
+    const n=s[k]||0; return `<span class="pill p-${cls} ${n?'':'zero'}">${k.toUpperCase()}: ${n}</span>`;
+  }).join('');
+  $('#metrics').textContent = `${ev.requests} requests · ${(ev.durationMs/1000).toFixed(1)}s`;
+}
+
+/* ---- downloads ---- */
+$('#dlHtml').addEventListener('click', ()=> location.href='/api/report.html?t='+encodeURIComponent(token));
+$('#dlJson').addEventListener('click', ()=> location.href='/api/report.json?t='+encodeURIComponent(token));
+
+/* ---- lifecycle: keepalive + quit ---- */
+setInterval(()=>{ fetch('/api/ping',{headers:H}).catch(()=>{}); }, 5000);
+$('#quit').addEventListener('click', ()=>{
+  fetch('/api/quit',{headers:H}).catch(()=>{});
+  document.body.innerHTML='<div style="max-width:520px;margin:16vh auto;text-align:center;color:#98a0b3;font:15px system-ui">'+
+    '<h2 style="color:#e9ebf2">Breakero closed</h2><p>You can close this tab.</p></div>';
+});
+window.addEventListener('pagehide', ()=>{ navigator.sendBeacon('/api/quit?t='+encodeURIComponent(token)); });
+</script>
+</body>
+</html>

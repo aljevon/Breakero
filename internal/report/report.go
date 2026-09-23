@@ -123,8 +123,8 @@ type jsonReport struct {
 	Coverage  []engine.CheckRun `json:"coverage"`
 }
 
-// WriteJSON writes a machine-readable report to path.
-func WriteJSON(res *engine.Result, path, version string) error {
+// RenderJSON builds the machine-readable report as bytes.
+func RenderJSON(res *engine.Result, version string) ([]byte, error) {
 	summary := map[string]int{}
 	for sev, n := range finding.Counts(res.Findings) {
 		summary[strings.ToLower(sev.String())] = n
@@ -143,7 +143,12 @@ func WriteJSON(res *engine.Result, path, version string) error {
 		Findings:  res.Findings,
 		Coverage:  res.CheckLog,
 	}
-	data, err := json.MarshalIndent(rep, "", "  ")
+	return json.MarshalIndent(rep, "", "  ")
+}
+
+// WriteJSON writes a machine-readable report to path.
+func WriteJSON(res *engine.Result, path, version string) error {
+	data, err := RenderJSON(res, version)
 	if err != nil {
 		return err
 	}
@@ -152,6 +157,11 @@ func WriteJSON(res *engine.Result, path, version string) error {
 
 // WriteHTML writes a self-contained (no external assets) HTML report to path.
 func WriteHTML(res *engine.Result, path, version string) error {
+	return os.WriteFile(path, RenderHTML(res, version), 0o644)
+}
+
+// RenderHTML builds a self-contained (no external assets) HTML report.
+func RenderHTML(res *engine.Result, version string) []byte {
 	var b strings.Builder
 	esc := html.EscapeString
 
@@ -238,7 +248,7 @@ func WriteHTML(res *engine.Result, path, version string) error {
 		`OWASP Top 10 2025 — A01 Broken Access Control</a>.</p></footer>`)
 	b.WriteString(`</body></html>`)
 
-	return os.WriteFile(path, []byte(b.String()), 0o644)
+	return []byte(b.String())
 }
 
 func field(b *strings.Builder, label, val string) {

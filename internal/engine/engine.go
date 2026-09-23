@@ -55,6 +55,9 @@ func (r *Runner) Run(ctx context.Context) (*Result, error) {
 		r.log.Printf("note: target returns success content for non-existent paths " +
 			"(catch-all/soft-404); path-guessing findings will be filtered to distinct pages")
 	}
+	if r.OnStart != nil {
+		r.OnStart(len(r.checks), catchAll)
+	}
 
 	for _, chk := range r.checks {
 		if r.client.BudgetExceeded() {
@@ -86,6 +89,10 @@ func (r *Runner) Run(ctx context.Context) (*Result, error) {
 		res.Findings = append(res.Findings, found...)
 		res.CheckLog = append(res.CheckLog, run)
 
+		if r.OnCheck != nil {
+			r.OnCheck(run, found)
+		}
+
 		if ctx.Err() != nil {
 			r.log.Printf("run cancelled: %v", ctx.Err())
 			break
@@ -104,6 +111,13 @@ type Runner struct {
 	client *httpx.Client
 	checks []checks.Check
 	log    *log.Logger
+
+	// OnStart, if set, is called once after calibration with the number of
+	// checks about to run and whether a catch-all was detected. OnCheck, if
+	// set, is called after each check finishes with its result and findings.
+	// The web UI uses these to stream live progress.
+	OnStart func(total int, catchAll bool)
+	OnCheck func(run CheckRun, found []finding.Finding)
 }
 
 // NewRunner builds a Runner from an already-validated config.

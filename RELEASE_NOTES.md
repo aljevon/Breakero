@@ -1,39 +1,28 @@
-## Breakero v1.0.0
+## Breakero v1.1.0
 
-First release. It's a small command-line scanner for broken access control, which is the top item on the OWASP Top 10 for 2025 (category A01). One binary, no dependencies, runs on Windows, macOS and Linux.
+Big one: Breakero has an app now. Double-click it and it opens in your browser. No console, no install, no digging through folders.
 
-### What it can do
+### The app
 
-Nine checks, each aimed at a real access-control mistake:
+Type a target URL, tick the box that says you're allowed to test it, hit Scan. Findings come in as you watch, each one written in plain language with the evidence and how to fix it. Hover any button or field and a little tooltip tells you what it does. When you're done you can pull down an HTML or JSON report.
 
-- **unauth** finds pages and APIs that serve real content with nobody logged in.
-- **forced-browse** guesses the addresses of things that should be hidden, like admin panels, config, `.git` and actuator endpoints.
-- **privesc** checks whether a low-privilege account can reach admin-only features.
-- **idor** swaps object ids to see if you can read someone else's data (IDOR / BOLA).
-- **method-tampering** tries other HTTP verbs when GET is blocked, in case one slipped through.
-- **header-bypass** replays known trust headers like `X-Forwarded-For` and `X-Original-URL` to get past a block.
-- **cors** flags a CORS setup that reflects any origin and allows credentials.
-- **path-traversal** looks for file reads outside the intended folder. Detection only, it doesn't pull files down.
-- **jwt-inspect** decodes the tokens you give it and points out weak ones: `alg=none`, no expiry, a role claim the client could edit.
+Under the hood it's a small web server bound to your own machine (127.0.0.1) with a random per-session token, so nothing else can reach it. Same scanning engine as the command line, same safety rails: it won't run until you confirm you're authorized, it only touches the host you typed, and it's rate limited.
 
-### The safety side
+It works the same way on Windows, macOS and Linux. Just run the binary, or `breakero -gui`.
 
-It won't run until you confirm you're allowed to test the target, and it refuses to touch any host outside your scope. Requests are paced and capped, and it stays read-only unless you turn on `-active`. There's also a soft-404 step that notices catch-all servers so you don't drown in false positives.
+### Also in this release
 
-### Reports
+- The Windows exe carries the Breakero icon and proper version details.
+- Double-clicking no longer pops a console window or copies anything to hidden folders. It just opens the app.
+- The command line is untouched. Everything from v1.0.0 still works.
 
-Color in the terminal, a single self-contained HTML file you can send to someone, and JSON if you want to script around it. Every finding comes with a plain-language explanation, the evidence, and how to fix it.
+### The checks (unchanged)
 
-### What's in this release
+unauth, forced-browse, privesc, idor, method-tampering, header-bypass, cors, path-traversal, jwt-inspect. All mapped to OWASP Top 10 2025, category A01.
 
-- Binaries for Windows, macOS and Linux (amd64 and arm64), plus zipped and tarred versions of each.
-- `install.sh` for macOS and Linux, `install.ps1` for Windows.
-- `checksums.txt` so you can verify what you downloaded.
+### What's in the download
 
-Grab a binary below, or use the one-liner:
+- Binaries for Windows, macOS and Linux (amd64 and arm64), plus zipped and tarred versions.
+- `checksums.txt` to verify what you grabbed.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/aljevon/Breakero/breakero/install.sh | sh
-```
-
-Please only use it on things you're allowed to test. See AUTHORIZATION.md.
+Grab a binary below and run it. Please only use it on things you're allowed to test. See AUTHORIZATION.md.

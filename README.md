@@ -28,6 +28,16 @@ The idea was to make something a beginner can actually run without a wiki open i
 > [!IMPORTANT]
 > Only point this at things you own or have written permission to test. In most countries, prodding someone else's site without that permission is a crime, full stop. Breakero won't even start until you tell it you're allowed, and it refuses to send a single request to any host you didn't put in scope. Have a look at [`AUTHORIZATION.md`](AUTHORIZATION.md) before your first run.
 
+## 🖥 The app
+
+Double-click the download and Breakero opens as an app. Type a URL, tick the box that says you're allowed to test it, hit Scan. Results show up as you go, each one with a plain explanation and how to fix it. No install, no terminal, no digging through folders. It works this way on Windows, macOS and Linux (it runs a tiny local server and opens your browser at it).
+
+<div align="center">
+  <img src="assets/app.png" alt="The Breakero app" width="820">
+</div>
+
+Prefer the command line? That still works too, same engine underneath. See [Quick start](#-quick-start).
+
 ---
 
 ## Contents
@@ -89,7 +99,7 @@ Windows, from PowerShell in your downloads folder:
 .\breakero-windows-amd64.exe -version
 ```
 
-On Windows you can also just **double-click the exe**. The first time it runs it copies itself into your user folder and adds that folder to your PATH, so from then on `breakero` works in any terminal. Run it again and it notices it's already set up and skips straight past. Done with it? `breakero -uninstall` removes it. The exe carries the Breakero icon, so it's easy to spot in Explorer.
+Or skip the terminal entirely: **double-click the exe** and the app opens in your browser. No console window, nothing to install, nothing copied to hidden folders. The exe carries the Breakero icon so it's easy to spot. On macOS and Linux it's the same idea, run the binary with no arguments (or `breakero -gui`) and the app opens.
 
 Linux or macOS, mark it runnable first:
 
@@ -98,27 +108,19 @@ chmod +x breakero-linux-amd64
 ./breakero-linux-amd64 -version
 ```
 
-### Or let the installer do it (macOS and Linux)
-
-One command. It works out your OS and CPU, pulls the latest release, and drops `breakero` on your PATH:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/aljevon/Breakero/breakero/install.sh | sh
-```
-
-Like to read a script before you pipe it into a shell? Fair. Download [`install.sh`](install.sh), look it over, then run it. On Windows there's a PowerShell version:
-
-```powershell
-irm https://raw.githubusercontent.com/aljevon/Breakero/breakero/install.ps1 | iex
-```
-
 ### Or build it
 
 Go 1.24 or newer is all you need. Jump to [Build it yourself](#-build-it-yourself).
 
 ## 🚀 Quick start
 
-Basic run. The `-i-am-authorized` flag is you confirming you're allowed to test this target:
+Just want the app? Run it with no arguments, or:
+
+```bash
+breakero -gui
+```
+
+For the command line, a basic run. The `-i-am-authorized` flag is you confirming you're allowed to test this target:
 
 ```bash
 breakero -url https://your-target.example -i-am-authorized -html report.html
@@ -218,7 +220,7 @@ A few fields worth explaining:
 | `-html` / `-json` | Write a report to a file |
 | `-explain` | Talk through each module. Good for learning |
 | `-list-checks` | Print the module ids |
-| `-install` / `-uninstall` | Set up (or remove) Breakero on this machine |
+| `-gui` | Open the app (graphical UI in your browser) |
 
 `breakero -h` has the rest.
 
@@ -267,6 +269,7 @@ internal/checks     the A01 test modules
 internal/httpx      HTTP client with scope, speed limit and the request cap
 internal/scope      the host-boundary guard
 internal/engine     runs the checks, plus the soft-404 step
+internal/webui      the app: local server and the embedded UI
 internal/report     terminal, HTML and JSON output
 internal/config     config loading and the authorization gate
 internal/finding    the finding model and severities

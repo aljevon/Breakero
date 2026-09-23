@@ -4,6 +4,23 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-23
+
+### Added
+- A graphical app. Double-click the binary (or run `breakero -gui`) and Breakero
+  opens in your browser: type a URL, confirm you're authorized, hit Scan, and
+  findings stream in live with the same plain-language explanations as the
+  reports. Every control has a tooltip. It's a tiny local server bound to
+  127.0.0.1 with a per-session token, so only the page it opened can drive it.
+- The Windows exe now carries the Breakero icon and version details.
+
+### Changed
+- Double-clicking the exe opens the app instead of a console window. On Windows
+  the console is hidden; on macOS and Linux running the binary with no arguments
+  does the same. The command line is unchanged and still drives the same engine.
+- Removed the earlier self-install-to-PATH behavior. Nothing gets copied to
+  hidden folders anymore; you just run the binary.
+
 ## [1.0.0] - 2026-09-23
 
 First public release.
@@ -25,4 +42,5 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.1.0]: https://github.com/aljevon/Breakero/releases/tag/v1.1.0
 [1.0.0]: https://github.com/aljevon/Breakero/releases/tag/v1.0.0

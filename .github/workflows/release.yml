@@ -81,11 +81,8 @@ jobs:
             fi
           done
           rm -f README.md LICENSE AUTHORIZATION.md
-          # Ship the universal installer alongside the binaries.
-          cp ../install.sh .
-          cp ../install.ps1 .
           # Checksums for everything.
-          sha256sum breakero-* install.sh install.ps1 > checksums.txt
+          sha256sum breakero-* > checksums.txt
           echo "Release contents:"; ls -lh
 
       - name: Publish to GitHub Releases
@@ -111,7 +108,7 @@ jobs:
             NOTES_ARG="--generate-notes"
           fi
           gh release create "$RELEASE_TAG" \
-            breakero-* install.sh install.ps1 checksums.txt \
+            breakero-* checksums.txt \
             --title "Breakero $RELEASE_TAG" \
             --target "$GITHUB_SHA" \
             $NOTES_ARG
