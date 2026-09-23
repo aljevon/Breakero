@@ -103,8 +103,15 @@ jobs:
             gh api -X DELETE "repos/$REPO/releases/$id" 2>/dev/null || true
           done
           # Create a published (non-draft) release, tagged at this commit.
+          # Use the hand-written notes when they exist, otherwise fall back
+          # to auto-generated ones.
+          if [ -f "$GITHUB_WORKSPACE/RELEASE_NOTES.md" ]; then
+            NOTES_ARG="--notes-file $GITHUB_WORKSPACE/RELEASE_NOTES.md"
+          else
+            NOTES_ARG="--generate-notes"
+          fi
           gh release create "$RELEASE_TAG" \
             breakero-* install.sh install.ps1 checksums.txt \
             --title "Breakero $RELEASE_TAG" \
             --target "$GITHUB_SHA" \
-            --generate-notes
+            $NOTES_ARG

@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="Breakero — Broken Access Control Scanner" width="100%">
+<img src="assets/banner.png" alt="Breakero, a Broken Access Control Scanner" width="100%">
 
-<p><em>A fast, friendly scanner for <strong>Broken Access Control</strong> — the #1 risk in the OWASP Top 10 (2025), category A01.</em></p>
+<p><em>A small, quick scanner for broken access control. That's category A01 in the OWASP Top 10 for 2025, and it sits right at the top of the list.</em></p>
 
 <p>
   <a href="#-quick-start"><img src="https://img.shields.io/badge/get%20started-in%2060%20seconds-6366f1?style=for-the-badge" alt="Get started"></a>
@@ -11,8 +11,8 @@
 
 <p>
   <img src="https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go&logoColor=white" alt="Go 1.24+">
-  <img src="https://img.shields.io/badge/platforms-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2a2e3a" alt="Platforms">
-  <img src="https://img.shields.io/badge/dependencies-zero-3fb950" alt="Zero dependencies">
+  <img src="https://img.shields.io/badge/runs%20on-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2a2e3a" alt="Platforms">
+  <img src="https://img.shields.io/badge/dependencies-none-3fb950" alt="No dependencies">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license">
   <img src="https://img.shields.io/badge/OWASP-A01%3A2025-e11d48" alt="OWASP A01:2025">
 </p>
@@ -21,75 +21,58 @@
 
 ---
 
-Breakero is a single-binary command-line tool that checks a web app or API for
-**Broken Access Control** — cases where the application lets someone see or do
-something they should not be allowed to. Think opening an admin page without
-logging in, reading another user's data by changing an `id` in the URL, or
-deleting a record through an HTTP method nobody remembered to lock down.
+Breakero looks for one kind of bug: spots where a web app or API hands you something it shouldn't. An admin page that opens with no login. Somebody else's account when you change an id in the URL. A delete endpoint nobody got around to protecting. That whole family of problems is called broken access control, and honestly it's everywhere.
 
-It is built to be **approachable**. If you are just starting out on a Red Team
-or in a SOC, Breakero explains every finding in plain language: what it means,
-the evidence it saw, and how a developer fixes it. If you are experienced, it
-gets out of your way and gives you clean JSON to pipe into the rest of your
-workflow.
+The idea was to make something a beginner can actually run without a wiki open in another tab. So every finding tells you what it hit, why that matters, and how a developer would go about fixing it, in plain words. If you've done this a hundred times already, run it quiet and take the JSON.
 
 > [!IMPORTANT]
-> **Only run Breakero against systems you own or are explicitly authorized to
-> test.** Testing without written permission is illegal in most countries.
-> Breakero refuses to start until you confirm authorization, and it will never
-> touch a host outside the scope you define. Please read
-> [`AUTHORIZATION.md`](AUTHORIZATION.md) first.
+> Only point this at things you own or have written permission to test. In most countries, prodding someone else's site without that permission is a crime, full stop. Breakero won't even start until you tell it you're allowed, and it refuses to send a single request to any host you didn't put in scope. Have a look at [`AUTHORIZATION.md`](AUTHORIZATION.md) before your first run.
 
 ---
 
 ## Contents
 
-- [Why Breakero](#-why-breakero)
-- [Safety by design](#-safety-by-design)
+- [What's good about it](#-whats-good-about-it)
+- [Staying out of trouble](#-staying-out-of-trouble)
 - [Install](#-install)
 - [Quick start](#-quick-start)
-- [What it tests](#-what-it-tests)
+- [What it checks](#-what-it-checks)
 - [Sample report](#-sample-report)
-- [Configuration](#-configuration)
-- [Command-line options](#-command-line-options)
-- [Understanding the results](#-understanding-the-results)
-- [Practice legally](#-practice-legally)
-- [Build from source](#-build-from-source)
-- [Project layout](#-project-layout)
+- [Config file](#-config-file)
+- [Flags](#-flags)
+- [Reading the results](#-reading-the-results)
+- [Somewhere safe to practice](#-somewhere-safe-to-practice)
+- [Build it yourself](#-build-it-yourself)
+- [How the code is laid out](#-how-the-code-is-laid-out)
 - [License](#-license)
 
 ---
 
-## ✨ Why Breakero
+## ✨ What's good about it
 
-- **One file, no setup.** No Python, no Node, no libraries to install. Download
-  the binary (or the `.exe`), run it. Cold start is instant.
-- **Made for learning.** `breakero -explain` walks you through every test in
-  everyday language. The HTML report opens with a short "read me first" primer.
-- **Safe out of the box.** Rate limiting, a request budget, a hard scope lock,
-  and read-only defaults mean you can explore without breaking things.
-- **Reports you can hand to anyone.** Colorful terminal output, a polished
-  self-contained HTML report, and machine-readable JSON.
-- **Fewer false alarms.** Automatic soft-404 / catch-all calibration filters
-  out the noise that makes most path scanners frustrating.
+- **It's one file.** No Python, no Node, nothing to install first. Download it and go. Cold start is basically instant.
+- **It explains itself.** Type `breakero -explain` and it talks you through every check in normal language. The HTML report opens with a short intro for people who are new to this.
+- **Hard to misuse.** There's a speed limit, a cap on total requests, a scope lock, and it stays read-only until you say otherwise. You won't knock a site over by accident.
+- **Reports you can hand to someone.** Color in the terminal, a single HTML file you can email, and JSON if you'd rather script around it.
+- **Less noise.** Plenty of scanners scream about every path they guess. This one notices when a server answers "200 OK" to things that don't exist and quiets down.
 
-## 🛡 Safety by design
+## 🛡 Staying out of trouble
 
-These are enforced by the code, not just written in a doc:
+None of this is on the honor system. The code enforces it.
 
-| Control | What it does |
+| Control | What it actually does |
 |---|---|
-| **Authorization gate** | Won't start unless you pass `-i-am-authorized` (or set `authorized: true`). Your attestation that you have permission. |
-| **Scope lock** | Every request is checked against your in-scope hosts. Anything else — even a redirect that leaves scope — is refused and never sent. |
-| **Rate limiting** | Requests are paced (default 5/sec). Breakero is a tester, not a stress tool, and is built so it can't be used as one by accident. |
-| **Request budget** | A global cap (default 2000) keeps any run bounded. |
-| **Read-only by default** | State-changing methods (POST/PUT/PATCH/DELETE) are off unless you explicitly pass `-active`. |
+| **Authorization gate** | It won't run until you pass `-i-am-authorized` (or set `authorized: true`). That's you saying you have permission. |
+| **Scope lock** | Every request gets checked against your list of allowed hosts. Anything else gets dropped before it's sent, including a redirect that would wander off scope. |
+| **Speed limit** | Requests go out slowly, about 5 a second unless you change it. It's a testing tool, not a flooder, and you can't really turn it into one. |
+| **Request cap** | A hard ceiling on total requests (2000 by default) so a run can't run away from you. |
+| **Read-only unless you say so** | POST, PUT, PATCH and DELETE stay off until you add `-active`. |
 
 ## 📦 Install
 
-### Option A — Download a ready-to-run binary
+### Grab a prebuilt binary
 
-Grab the file for your system from the [**Releases**](../../releases) page:
+Pick the file for your machine on the [**Releases**](../../releases) page:
 
 | System | File |
 |---|---|
@@ -97,106 +80,96 @@ Grab the file for your system from the [**Releases**](../../releases) page:
 | Windows ARM | `breakero-windows-arm64.exe` |
 | Linux 64-bit | `breakero-linux-amd64` |
 | Linux ARM64 | `breakero-linux-arm64` |
-| macOS (Intel) | `breakero-darwin-amd64` |
-| macOS (Apple Silicon) | `breakero-darwin-arm64` |
+| macOS Intel | `breakero-darwin-amd64` |
+| macOS Apple Silicon | `breakero-darwin-arm64` |
 
-On **Windows**, open PowerShell in the download folder and run:
+Windows, from PowerShell in your downloads folder:
 
 ```powershell
 .\breakero-windows-amd64.exe -version
 ```
 
-On **Linux / macOS**, make it executable first:
+Linux or macOS, mark it runnable first:
 
 ```bash
 chmod +x breakero-linux-amd64
 ./breakero-linux-amd64 -version
 ```
 
-### Option B — One-line installer (macOS & Linux)
+### Or let the installer do it (macOS and Linux)
 
-An all-in-one installer detects your OS and architecture, downloads the latest
-release, and installs `breakero` onto your `PATH`:
+One command. It works out your OS and CPU, pulls the latest release, and drops `breakero` on your PATH:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aljevon/Breakero/breakero/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aljevon/Breakero/breakero/install.sh | sh
 ```
 
-Prefer to read before you run? Download [`install.sh`](install.sh), review it,
-then execute it. On **Windows**, use the PowerShell installer:
+Like to read a script before you pipe it into a shell? Fair. Download [`install.sh`](install.sh), look it over, then run it. On Windows there's a PowerShell version:
 
 ```powershell
 irm https://raw.githubusercontent.com/aljevon/Breakero/breakero/install.ps1 | iex
 ```
 
-### Option C — Build it yourself
+### Or build it
 
-See [Build from source](#-build-from-source). You only need Go 1.24+.
+Go 1.24 or newer is all you need. Jump to [Build it yourself](#-build-it-yourself).
 
 ## 🚀 Quick start
 
-Run a basic scan. The `-i-am-authorized` flag is your confirmation that you have
-permission to test the target:
+Basic run. The `-i-am-authorized` flag is you confirming you're allowed to test this target:
 
 ```bash
 breakero -url https://your-target.example -i-am-authorized -html report.html
 ```
 
-Learn what each test does (great when you're starting out):
+Not sure what each check does? Ask it:
 
 ```bash
 breakero -explain
 ```
 
-Scan as a logged-in user, to test access between accounts:
+Scan while logged in, so it can check what one account can reach that another can't:
 
 ```bash
 breakero -url https://your-target.example -i-am-authorized \
   -cookie "session=YOUR_SESSION_COOKIE"
 ```
 
-Run a deep scan with multiple roles and endpoints, driven by a config file:
+Bigger job with several roles and a list of endpoints, driven by a config file:
 
 ```bash
 breakero -config configs/example.json
 ```
 
-## 🔍 What it tests
+## 🔍 What it checks
 
-Every module maps to a real Broken Access Control pattern from OWASP A01:2025.
-Run `breakero -list-checks` for the ids, or `-explain` for the plain-language
-version.
+Nine modules, each one aimed at a real broken-access-control pattern from A01:2025. Run `breakero -list-checks` for the short ids, or `-explain` for the friendly version.
 
-| Module (`id`) | What it looks for |
+| Module (`id`) | What it's hunting for |
 |---|---|
-| `unauth` | Endpoints that serve protected content with no login (missing authentication) |
-| `forced-browse` | Guessing the address of sensitive pages — admin panels, config, `.git`, actuator |
-| `privesc` | Vertical privilege escalation: a low-privilege role reaching admin-only features |
-| `idor` | IDOR / BOLA: reading another user's object by swapping the `id` |
-| `method-tampering` | HTTP verb tampering — a rule that guards GET but forgets HEAD/PUT/DELETE |
-| `header-bypass` | Bypassing a denial with a trusted header (`X-Forwarded-For`, `X-Original-URL`, …) |
-| `cors` | CORS misconfiguration that reflects any origin together with credentials |
-| `path-traversal` | Reading files outside the intended folder (`../../etc/passwd`), detection-only |
-| `jwt-inspect` | Token / JWT weaknesses: `alg=none`, no expiry, privilege claims held client-side |
+| `unauth` | Pages and APIs that serve real content with nobody logged in |
+| `forced-browse` | Guessing the address of stuff that should be hidden: admin panels, config, `.git`, actuator |
+| `privesc` | A low-privilege account reaching something only an admin should touch |
+| `idor` | Reading another user's object by swapping the `id` (IDOR / BOLA) |
+| `method-tampering` | A rule that guards GET but forgot about HEAD, PUT or DELETE |
+| `header-bypass` | Walking past a block with a trusted header like `X-Forwarded-For` or `X-Original-URL` |
+| `cors` | A CORS setup that reflects any origin and allows credentials too |
+| `path-traversal` | Reaching files outside the intended folder, `../../etc/passwd` style. Detection only |
+| `jwt-inspect` | Weak tokens: `alg=none`, no expiry, a role claim the client could edit |
 
-Every module goes through one shared HTTP client that **enforces scope, rate
-limiting, and the request budget** — no module can slip past those controls.
+Everything goes through one shared HTTP client, and that client is where scope, the speed limit and the request cap live. No module gets to skip them.
 
 ## 🖼 Sample report
 
-The HTML report is self-contained — one file, no external assets — so you can
-open it anywhere or attach it to a ticket. Every finding is explained in plain
-language with the evidence and a fix.
+The HTML report is a single file with nothing external, so you can open it anywhere or drop it straight into a ticket. Every finding gets the plain-language write-up, the evidence, and the fix.
 
 <div align="center">
   <img src="assets/report-sample.png" alt="Breakero HTML report" width="780">
 </div>
 
-## ⚙️ Configuration
+## ⚙️ Config file
 
-To detect **IDOR** and **privilege escalation**, Breakero needs to know which
-role holds which credentials, and which objects belong to whom. A full example
-lives in [`configs/example.json`](configs/example.json). In short:
+IDOR and privilege escalation need a bit more context. Breakero has to know which role holds which login, and which objects belong to whom. The full example is [`configs/example.json`](configs/example.json). The gist:
 
 ```json
 {
@@ -219,93 +192,85 @@ lives in [`configs/example.json`](configs/example.json). In short:
 }
 ```
 
-- **`level`** — privilege level; higher is more privileged, `0` is anonymous.
-- **`owned_ids`** — object ids that legitimately belong to a role; used to test
-  cross-user access (BOLA).
-- **`id_param`** — the parameter that holds an object reference (for IDOR), or
-  use a `{id}` placeholder in the path. A param named like `file`/`path` also
-  feeds the path-traversal module.
-- **`min_role`** — the least-privileged role that should be allowed; used by the
-  privilege-escalation module.
+A few fields worth explaining:
 
-## 🎛 Command-line options
+- `level` is how much power a role has. Bigger number, more power. 0 means anonymous.
+- `owned_ids` are the object ids that legitimately belong to a role. That's how the cross-user test knows whose data it's poking at.
+- `id_param` names the parameter that carries an object reference for IDOR, or you can drop a `{id}` placeholder in the path. Name a param something like `file` or `path` and the traversal check will pick it up too.
+- `min_role` is the lowest role that's supposed to be allowed in. The privilege-escalation check uses it.
 
-| Flag | Meaning |
+## 🎛 Flags
+
+| Flag | What it does |
 |---|---|
 | `-url` | Target base URL |
-| `-i-am-authorized` | **Required.** Confirms you have permission to test |
+| `-i-am-authorized` | Required. You confirming you're allowed to test |
 | `-config` | Path to a JSON config file |
-| `-cookie` | Cookie for a quick authenticated scan |
-| `-header` | Extra header `Name: Value` (separate several with `;;`) |
-| `-checks` | Limit to specific modules, e.g. `unauth,cors` |
-| `-scope` / `-exclude` | Add / remove in-scope hosts (supports `*.example.com`) |
+| `-cookie` | Cookie for a quick logged-in scan |
+| `-header` | Extra header `Name: Value` (chain several with `;;`) |
+| `-checks` | Only run certain modules, e.g. `unauth,cors` |
+| `-scope` / `-exclude` | Add or drop in-scope hosts (`*.example.com` works) |
 | `-rate` | Requests per second (default 5) |
-| `-max-requests` | Global request budget (default 2000) |
-| `-active` | Allow state-changing methods (POST/PUT/PATCH/DELETE) — use with care |
+| `-max-requests` | Total request cap (default 2000) |
+| `-active` | Allow POST/PUT/PATCH/DELETE. Think before you use it |
 | `-html` / `-json` | Write a report to a file |
-| `-explain` | Explain each module (learning mode) |
-| `-list-checks` | List the modules |
+| `-explain` | Talk through each module. Good for learning |
+| `-list-checks` | Print the module ids |
 
-Run `breakero -h` for the complete list.
+`breakero -h` has the rest.
 
-## 📊 Understanding the results
+## 📊 Reading the results
 
-Each finding has a **severity** (CRITICAL → INFO) and a **confidence**:
+Every finding carries a severity (CRITICAL down to INFO) and a confidence:
 
-- `confirmed` — proven (e.g. a path-traversal payload that returned file contents).
-- `likely` — strongly supported by comparison.
-- `needs-review` — verify it by hand. Automated tools can be fooled by unusual
-  apps, so always confirm before you report.
+- `confirmed` means it's real. A traversal payload that actually returned file contents, say.
+- `likely` means the comparison backs it up pretty strongly.
+- `needs-review` means go check it by hand. Odd apps fool automated tools, so confirm before you write it up.
 
-Breakero also runs a **soft-404 calibration**: if the server answers `200 OK`
-with content for pages that don't exist (a catch-all), Breakero notices and
-stops flagging every guessed path — which cuts false positives dramatically.
+There's also a soft-404 step at the start. If the server answers "200 OK" with a page for URLs that don't exist, Breakero spots that and stops flagging every guessed path. Cuts the false positives way down.
 
-> "No findings" is **not** a certificate of security. It means these specific
-> tests didn't trigger. Breakero is a strong starting point, not a replacement
-> for manual testing and business-logic review.
+One thing to keep in mind: "no findings" doesn't mean the target is safe. It means these particular checks didn't fire. Treat this as a first pass, not the whole job. Real testing still needs a human poking at the business logic.
 
-## 🎯 Practice legally
+## 🎯 Somewhere safe to practice
 
-No target you're allowed to test yet? Practice on intentionally vulnerable apps
-you run yourself:
+No target you're cleared to test yet? Spin up something built to be broken on purpose and go wild:
 
 - [OWASP Juice Shop](https://owasp.org/www-project-juice-shop/)
 - [PortSwigger Web Security Academy](https://portswigger.net/web-security)
-- [DVWA — Damn Vulnerable Web Application](https://github.com/digininja/DVWA)
+- [DVWA, the Damn Vulnerable Web Application](https://github.com/digininja/DVWA)
 
-## 🧱 Build from source
+## 🧱 Build it yourself
 
-You only need [Go 1.24+](https://go.dev/dl/).
+You just need [Go 1.24+](https://go.dev/dl/).
 
 ```bash
-# Linux / macOS — build every platform's binary into ./dist
+# Linux / macOS: build every platform into ./dist
 ./build.sh
 
 # Windows (PowerShell)
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 # or with make
-make release      # all platforms
-make build        # just your current OS
-make test         # run the test suite
+make release      # every platform
+make build        # just your machine
+make test         # run the tests
 ```
 
-## 🗂 Project layout
+## 🗂 How the code is laid out
 
 ```
-cmd/breakero        CLI entry point
+cmd/breakero        the CLI itself
 internal/checks     the A01 test modules
-internal/httpx      HTTP client with scope + rate limit + budget
-internal/scope      host-boundary enforcement (safety)
-internal/engine     orchestration + soft-404 calibration
-internal/report     terminal / HTML / JSON reports
-internal/config     configuration + the authorization gate
-internal/finding    finding model + severity
+internal/httpx      HTTP client with scope, speed limit and the request cap
+internal/scope      the host-boundary guard
+internal/engine     runs the checks, plus the soft-404 step
+internal/report     terminal, HTML and JSON output
+internal/config     config loading and the authorization gate
+internal/finding    the finding model and severities
 ```
 
 ## 📄 License
 
-Released under the [MIT License](LICENSE). Use it responsibly and legally.
+MIT. See [`LICENSE`](LICENSE). Use it on things you're allowed to use it on.
 
-<div align="center"><sub>Breakero · Broken Access Control Scanner · OWASP Top 10 2025 — A01</sub></div>
+<div align="center"><sub>Breakero · a Broken Access Control scanner · OWASP Top 10 2025, A01</sub></div>

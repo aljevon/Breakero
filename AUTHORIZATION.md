@@ -1,56 +1,38 @@
-# Authorization & Responsible Use
+# Permission and responsible use
 
-Breakero is a security testing tool. It sends real HTTP requests to a target
-and tries to reach things a normal user should not be able to reach. **You may
-only run it against systems you own or have explicit, written permission to
-test.**
+Breakero sends real requests at a target and tries to reach things a normal user can't. So run it only against systems you own or have been given clear, written permission to test. That's the whole rule.
 
-Testing a system without authorization is illegal in most countries (for
-example, unauthorized access laws such as the US CFAA, the UK Computer Misuse
-Act, and Indonesia's UU ITE). Getting a bug does not make the access legal —
-permission does.
+Testing something without that permission is illegal in most places. In the US there's the CFAA. The UK has the Computer Misuse Act. Indonesia has UU ITE. And plenty of other countries have their own version. Finding a real bug doesn't make the access legal. Permission does.
 
-## Before you scan, make sure you have
+## Before you point it at anything
 
-- [ ] **Written authorization** naming the exact targets (domains, IPs, apps).
-- [ ] **A defined scope** — which hosts are in, which are out.
-- [ ] **A testing window** agreed with the system owner.
-- [ ] **A point of contact** to notify if something breaks.
-- [ ] Confirmation you are testing **non-production** data where possible.
+- [ ] You have **written permission** that names the exact targets (domains, IPs, apps).
+- [ ] The **scope** is agreed. You know what's in and what's off-limits.
+- [ ] There's a **testing window** the owner signed off on.
+- [ ] You've got a **contact** to call if something breaks.
+- [ ] Where possible, you're hitting **non-production** data.
 
-Good places to practise legally, with no permission needed beyond their own
-terms:
+Want to practice without any of that? These are made to be attacked, and their own terms cover it:
 
-- **OWASP Juice Shop** (run it locally): <https://owasp.org/www-project-juice-shop/>
+- **OWASP Juice Shop**, run locally: <https://owasp.org/www-project-juice-shop/>
 - **PortSwigger Web Security Academy**: <https://portswigger.net/web-security>
-- **DVWA (Damn Vulnerable Web Application)**: <https://github.com/digininja/DVWA>
-- Public bug-bounty programs — **read each program's scope and rules first.**
+- **DVWA**: <https://github.com/digininja/DVWA>
+- Public bug-bounty programs. Read the scope and rules for each one first.
 
-## How Breakero keeps you inside the lines
+## What the tool does to keep you honest
 
-These are enforced by the tool, not just suggestions:
+These aren't suggestions in a doc. The code does them.
 
-1. **Authorization gate.** Breakero refuses to start unless you pass
-   `-i-am-authorized` (or set `"authorized": true` in the config). This is your
-   attestation that you have permission.
-2. **Scope lock.** Every request is checked against your in-scope host list.
-   A request to any other host — even via a redirect — is refused and never
-   sent. If no scope is set, nothing runs.
-3. **Rate limiting.** Requests are paced (default 5/second). Breakero is an
-   access-control tester, **not** a stress or denial-of-service tool, and it is
-   built so it cannot be used as one by accident.
-4. **Request budget.** A global cap (default 2000) stops a run from ballooning.
-5. **Read-only by default.** Data-changing methods (POST/PUT/PATCH/DELETE) are
-   disabled unless you explicitly pass `-active`. Even then, use them only when
-   your authorization covers modifying data.
+1. **Authorization gate.** It won't start unless you pass `-i-am-authorized` (or set `"authorized": true`). That flag is you going on record that you have permission.
+2. **Scope lock.** Every request gets checked against your list of allowed hosts. Anything else gets dropped before it leaves, even if a redirect tries to pull it somewhere new. No scope, nothing runs.
+3. **Speed limit.** Requests are paced, 5 a second by default. This is a testing tool, not a way to hammer a server, and it's built so you can't quietly turn it into one.
+4. **Request cap.** A global ceiling (2000 by default) so one run can't balloon.
+5. **Read-only by default.** POST, PUT, PATCH and DELETE stay off unless you add `-active`. And even then, only use them if your permission actually covers changing data.
 
-## Handling findings responsibly
+## Once you've found something
 
-- Treat scan output and any data you see as **confidential**.
-- Report issues to the system owner through the agreed channel; do not disclose
-  publicly without coordination.
-- Do not pivot, escalate, or access more data than needed to demonstrate an
-  issue. Confirm, document, stop.
+- Keep the output and anything you saw to yourself. It's confidential.
+- Report it to the owner through whatever channel you agreed on. Don't post it publicly without sorting that out with them first.
+- Don't dig deeper than you need to. Confirm the issue, write down enough to prove it, and stop. No pivoting, no grabbing extra data.
 
-If you are not sure whether you are allowed to test something: **you are not.**
-Ask first.
+Not sure you're allowed to test something? Then you're not. Ask first.
