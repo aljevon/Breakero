@@ -4,6 +4,22 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-09-24
+
+### Added
+- Two new checks, drawn from the PortSwigger Web Security Academy material:
+  - `url-bypass`: reaches a blocked path a different way (trailing slash, case,
+    encoded slash, dot and semicolon segments like `/admin..;/`, or a rewrite
+    header), the classic URL-matching-discrepancy bypass.
+  - `param-privilege`: spots access decided by something the client sends, such
+    as `?admin=true`, an `X-User-Role: admin` header, or an `isAdmin` cookie.
+- forced-browse now also reads robots.txt and sitemap.xml and tries the paths
+  the site leaks there. robots.txt in particular often lists admin URLs.
+- header-bypass covers more trusted headers, including Referer-based controls
+  and True-Client-IP / X-Real-IP.
+- A longer built-in list of sensitive paths (swagger, graphql, actuator
+  heapdump, phpmyadmin, .env, and more).
+
 ## [1.3.2] - 2026-09-24
 
 ### Fixed
@@ -108,6 +124,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.4.0]: https://github.com/aljevon/Breakero/releases/tag/v1.4.0
 [1.3.2]: https://github.com/aljevon/Breakero/releases/tag/v1.3.2
 [1.3.1]: https://github.com/aljevon/Breakero/releases/tag/v1.3.1
 [1.3.0]: https://github.com/aljevon/Breakero/releases/tag/v1.3.0

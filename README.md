@@ -149,16 +149,18 @@ breakero -config configs/example.json
 
 ## What it checks
 
-Nine modules, each one aimed at a real broken-access-control pattern from A01:2025. Run `breakero -list-checks` for the short ids, or `-explain` for the friendly version.
+Eleven modules, each one aimed at a real broken-access-control pattern from A01:2025 (and drawn from sources like the PortSwigger Web Security Academy). Run `breakero -list-checks` for the short ids, or `-explain` for the friendly version.
 
 | Module (`id`) | What it's hunting for |
 |---|---|
 | `unauth` | Pages and APIs that serve real content with nobody logged in |
-| `forced-browse` | Guessing the address of stuff that should be hidden: admin panels, config, `.git`, actuator |
+| `forced-browse` | Guessing the address of hidden stuff (admin, config, `.git`, actuator), plus paths the site leaks in robots.txt and sitemap.xml |
 | `privesc` | A low-privilege account reaching something only an admin should touch |
 | `idor` | Reading another user's object by swapping the `id` (IDOR / BOLA) |
 | `method-tampering` | A rule that guards GET but forgot about HEAD, PUT or DELETE |
-| `header-bypass` | Walking past a block with a trusted header like `X-Forwarded-For` or `X-Original-URL` |
+| `header-bypass` | Walking past a block with a trusted header like `X-Forwarded-For`, `Referer` or `X-Original-URL` |
+| `url-bypass` | Reaching a blocked path a different way: `/admin/`, `/ADMIN`, `/admin%2f`, `/admin..;/`, a rewrite header |
+| `param-privilege` | Access decided by something you send: `?admin=true`, `X-User-Role: admin`, an `isAdmin` cookie |
 | `cors` | A CORS setup that reflects any origin and allows credentials too |
 | `path-traversal` | Reaching files outside the intended folder, `../../etc/passwd` style. Detection only |
 | `jwt-inspect` | Weak tokens: `alg=none`, no expiry, a role claim the client could edit |

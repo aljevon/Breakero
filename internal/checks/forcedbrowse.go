@@ -2,6 +2,8 @@ package checks
 
 import (
 	"fmt"
+	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/aljevon/breakero/internal/config"
@@ -38,6 +40,12 @@ func (c *ForcedBrowseCheck) Run(ctx *Context) ([]finding.Finding, error) {
 	} else {
 		for _, p := range defaultSensitivePaths {
 			paths = append(paths, config.Endpoint{Path: p, Method: "GET", Sensitive: true})
+		}
+		// Pull extra paths the site itself reveals in robots.txt and sitemap.xml.
+		// robots.txt in particular often lists the very admin URLs it wants to
+		// hide from search engines, which is a gift for access-control testing.
+		for _, p := range discoverPaths(ctx) {
+			paths = append(paths, config.Endpoint{Path: p, Method: "GET", Sensitive: false})
 		}
 	}
 
@@ -90,6 +98,72 @@ func (c *ForcedBrowseCheck) Run(ctx *Context) ([]finding.Finding, error) {
 					"an internal network only.", ep.Path)))
 	}
 	return out, nil
+}
+
+var sitemapLoc = regexp.MustCompile(`(?i)<loc>\s*([^<\s]+)\s*</loc>`)
+
+// discoverPaths reads robots.txt and sitemap.xml and returns extra in-scope
+// paths worth trying. It is capped so it cannot balloon a scan.
+func discoverPaths(ctx *Context) []string {
+	cfg := ctx.Config
+	anon := cfg.AnonymousRole()
+	seen := map[string]bool{}
+	for _, p := range defaultSensitivePaths {
+		seen[p] = true
+	}
+	var found []string
+	add := func(p string) {
+		p = strings.TrimSpace(p)
+		if p == "" || !strings.HasPrefix(p, "/") || seen[p] || len(found) >= 40 {
+			return
+		}
+		if strings.ContainsAny(p, " \t") || len(p) > 128 {
+			return
+		}
+		seen[p] = true
+		found = append(found, p)
+	}
+
+	get := func(path string) string {
+		u, err := cfg.NormalizeURL(path)
+		if err != nil {
+			return ""
+		}
+		resp, err := ctx.Client.Do(ctx.Ctx, httpx.RequestSpec{
+			Method: "GET", URL: u, Headers: anon.Headers, Cookie: anon.Cookie,
+		})
+		if err != nil || resp.Status < 200 || resp.Status >= 300 {
+			return ""
+		}
+		return resp.BodyString()
+	}
+
+	// robots.txt: Disallow/Allow lines carry paths.
+	for _, line := range strings.Split(get("/robots.txt"), "\n") {
+		line = strings.TrimSpace(line)
+		low := strings.ToLower(line)
+		if strings.HasPrefix(low, "disallow:") || strings.HasPrefix(low, "allow:") {
+			val := strings.TrimSpace(line[strings.Index(line, ":")+1:])
+			if i := strings.IndexAny(val, "*?#"); i >= 0 {
+				val = val[:i]
+			}
+			add(val)
+		}
+	}
+
+	// sitemap.xml: <loc> entries, kept to same-host paths.
+	base, _ := url.Parse(cfg.BaseURL)
+	for _, m := range sitemapLoc.FindAllStringSubmatch(get("/sitemap.xml"), -1) {
+		if lu, err := url.Parse(strings.TrimSpace(m[1])); err == nil {
+			if lu.Host == "" || (base != nil && lu.Host == base.Host) {
+				add(lu.Path)
+			}
+		}
+	}
+	if len(found) > 0 {
+		ctx.Log.Printf("[forced-browse] discovered %d extra paths from robots.txt/sitemap.xml", len(found))
+	}
+	return found
 }
 
 func looksAdminPath(p string) bool {

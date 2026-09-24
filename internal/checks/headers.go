@@ -40,6 +40,11 @@ var bypassHeaders = []struct {
 	{"X-Client-IP", "127.0.0.1", "spoofed client IP"},
 	{"X-Host", "localhost", "spoofed host"},
 	{"X-Custom-IP-Authorization", "127.0.0.1", "framework IP allow header"},
+	{"X-ProxyUser-Ip", "127.0.0.1", "spoofed proxy user IP"},
+	{"X-Forwarded-Server", "localhost", "spoofed forwarded server"},
+	{"X-Real-IP", "127.0.0.1", "spoofed real client IP"},
+	{"True-Client-IP", "127.0.0.1", "spoofed CDN client IP"},
+	{"Referer", "/", "trusted referer (a referer-based control)"},
 	{"X-Original-URL", "/", "proxy URL rewrite"},
 	{"X-Rewrite-URL", "/", "proxy URL rewrite"},
 }
@@ -71,7 +76,17 @@ func (c *HeaderBypassCheck) Run(ctx *Context) ([]finding.Finding, error) {
 			if ctx.Client.BudgetExceeded() {
 				return out, nil
 			}
-			headers := map[string]string{h.name: h.value}
+			hval := h.value
+			// Referer- and rewrite-based controls compare against a real path,
+			// so point them at an admin-looking URL rather than "/".
+			if h.name == "Referer" {
+				if abs, e := cfg.NormalizeURL("/admin"); e == nil {
+					hval = abs
+				}
+			} else if h.name == "X-Original-URL" || h.name == "X-Rewrite-URL" {
+				hval = "/admin"
+			}
+			headers := map[string]string{h.name: hval}
 			for k, v := range anon.Headers {
 				headers[k] = v
 			}
@@ -87,10 +102,10 @@ func (c *HeaderBypassCheck) Run(ctx *Context) ([]finding.Finding, error) {
 					WithURL(u).WithMethod("GET").
 					WithMeaning(c.Teaches()).
 					WithEvidence(fmt.Sprintf("Plain request returned HTTP %d, but adding %q: %q (%s) "+
-						"returned HTTP %d.", base.Status, h.name, h.value, h.note, resp.Status)).
+						"returned HTTP %d.", base.Status, h.name, hval, h.note, resp.Status)).
 					WithConfidence("likely").
-					WithRepro(repro("GET", u, map[string]string{h.name: h.value},
-						"Resend the blocked request with the header "+h.name+": "+h.value+" added. "+
+					WithRepro(repro("GET", u, map[string]string{h.name: hval},
+						"Resend the blocked request with the header "+h.name+": "+hval+" added. "+
 							"If the page now returns, that header is trusted for access decisions.")).
 					WithRemediation("Do not make authorization decisions from client-supplied headers. Strip "+
 						"or normalize X-Forwarded-* and X-Original-URL/X-Rewrite-URL at the trusted edge, and "+

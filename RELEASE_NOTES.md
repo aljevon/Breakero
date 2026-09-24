@@ -1,29 +1,29 @@
-## Breakero v1.3.2
+## Breakero v1.4.0
 
-Fixes and polish from real‑world use.
+Stronger detection. Two new checks and some sharper existing ones, taking cues from the PortSwigger Web Security Academy access-control material.
 
-### Report download fixed
+### New: url-bypass
 
-Saving a report could fail with "could not save the report: failed to fetch", usually after a long scan or when the window lost focus. The cause was the little watchdog that closes the app when its window goes away: it was too quick and could shut the local server down early. It's now far more patient, and downloads go straight to a download link instead of a fetch, so a busy connection can't break them.
+A blocked path like `/admin` can often be reached a slightly different way, because a proxy or framework matches the URL as text while the app resolves it to the same page. This check tries the classics: a trailing slash, uppercase, an encoded slash, dot and semicolon segments (`/admin/.`, `/admin%2f`, `/admin..;/`), a double slash, and rewrite headers. If any of them gets in where the plain path was blocked, it flags it.
 
-### Reproduction steps, spelled out
+### New: param-privilege
 
-Every finding's "how to reproduce" is now step by step for someone who has never touched a terminal: how to open PowerShell on Windows (and the important detail that you type `curl.exe`, not `curl`), the same for a terminal on Linux and macOS, the browser way, and what to look at in the reply to know it's real.
+Some apps decide what you can do from something you send them: `?admin=true` in the URL, an `X-User-Role: admin` header, or an `isAdmin` cookie. This check adds those to blocked requests and sees whether they open up. If they do, the app trusted a value you controlled.
 
-### Dark title bar
+### Sharper existing checks
 
-On Windows the window's title bar is dark now and matches the app, instead of the old white bar. It reads like a proper dark‑mode app.
+- forced-browse now reads robots.txt and sitemap.xml and tries the paths the site leaks there. robots.txt loves to list the exact admin URLs it wants hidden.
+- header-bypass covers more trusted headers, including Referer-based controls and True-Client-IP / X-Real-IP.
+- A longer built-in list of sensitive paths (swagger, graphql, actuator heapdump, phpmyadmin, .env and more).
 
-### Livelier animation
-
-The background scan sweep is brighter and quicker, the accent line shimmers, and the bolt in the logo gives a gentle pulse.
+Same safety rails as always: it only touches the host you type, it's rate limited, and it won't run until you confirm you're authorized. Every finding still comes with step-by-step reproduction.
 
 ### Downloads
 
-Three files, one for each system, to keep it simple:
+Three files, one for each system:
 
 - `breakero-windows-amd64.exe` for Windows (64-bit)
 - `breakero-linux-amd64` for Linux (64-bit)
 - `breakero-darwin-amd64` for macOS (64-bit; runs on Apple Silicon through Rosetta)
 
-Grab the one for your system and run it. Please only use it on things you're allowed to test. See AUTHORIZATION.md.
+Please only use it on things you're allowed to test. See AUTHORIZATION.md.
