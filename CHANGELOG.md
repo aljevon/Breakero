@@ -4,6 +4,24 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-09-24
+
+### Fixed
+- Report download no longer fails with "failed to fetch". The keepalive
+  watchdog was too aggressive and could shut the local server down during a
+  long scan or when the window lost focus; its timeout is now much more lenient.
+- Downloads use a direct download link instead of a fetch, so a busy connection
+  can't break them.
+
+### Changed
+- Reproduction steps are now much more detailed: numbered instructions for
+  Windows (open PowerShell, and use curl.exe rather than curl), for Linux and
+  macOS, and for the browser, plus what to look for in the reply.
+- The native Windows window now has a dark title bar that matches the app
+  instead of a white one.
+- Brighter, quicker background animation: a livelier scan sweep, a shimmering
+  accent rule, and a gently pulsing bolt in the logo.
+
 ## [1.3.1] - 2026-09-24
 
 ### Changed
@@ -87,6 +105,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.3.2]: https://github.com/aljevon/Breakero/releases/tag/v1.3.2
 [1.3.1]: https://github.com/aljevon/Breakero/releases/tag/v1.3.1
 [1.3.0]: https://github.com/aljevon/Breakero/releases/tag/v1.3.0
 [1.2.0]: https://github.com/aljevon/Breakero/releases/tag/v1.2.0

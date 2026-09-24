@@ -110,8 +110,12 @@ func (s *Server) Stop() {
 }
 
 func (s *Server) watchdog(ctx context.Context, cancel context.CancelFunc) {
-	// Generous first window so a slow browser start does not kill the app.
-	t := time.NewTimer(45 * time.Second)
+	// The window sends a keepalive ping every few seconds. Browsers throttle
+	// timers heavily when a window loses focus (down to about once a minute),
+	// and a scan can run for minutes, so the timeout is deliberately generous:
+	// it is only meant to reclaim an orphaned server after the window is really
+	// gone, while prompt shutdown comes from the window's own quit/pagehide.
+	t := time.NewTimer(150 * time.Second)
 	defer t.Stop()
 	for {
 		select {
@@ -124,7 +128,7 @@ func (s *Server) watchdog(ctx context.Context, cancel context.CancelFunc) {
 				default:
 				}
 			}
-			t.Reset(20 * time.Second)
+			t.Reset(150 * time.Second)
 		case <-t.C:
 			cancel()
 			return

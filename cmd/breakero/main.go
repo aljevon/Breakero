@@ -29,7 +29,7 @@ import (
 	"github.com/aljevon/breakero/internal/scope"
 )
 
-const version = "1.3.1"
+const version = "1.3.2"
 
 func main() {
 	os.Exit(run())

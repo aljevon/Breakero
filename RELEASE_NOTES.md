@@ -1,10 +1,22 @@
-## Breakero v1.3.1
+## Breakero v1.3.2
 
-Mostly a fresh coat of paint so everything matches.
+Fixes and polish from real‑world use.
 
-The logo, the window and file icon, the README banner and the HTML report now all use the same look as the app: a dark, monochrome layout with one amber accent, a white shield and an amber bolt. The old purple styling is gone, so the repo, the icon and the tool finally line up.
+### Report download fixed
 
-Nothing about how it works has changed since v1.3.0: native window on Windows (WebView2, now with the right icon), app-mode window on macOS and Linux, live findings, per-finding reproduction steps, a stop button, and working report downloads.
+Saving a report could fail with "could not save the report: failed to fetch", usually after a long scan or when the window lost focus. The cause was the little watchdog that closes the app when its window goes away: it was too quick and could shut the local server down early. It's now far more patient, and downloads go straight to a download link instead of a fetch, so a busy connection can't break them.
+
+### Reproduction steps, spelled out
+
+Every finding's "how to reproduce" is now step by step for someone who has never touched a terminal: how to open PowerShell on Windows (and the important detail that you type `curl.exe`, not `curl`), the same for a terminal on Linux and macOS, the browser way, and what to look at in the reply to know it's real.
+
+### Dark title bar
+
+On Windows the window's title bar is dark now and matches the app, instead of the old white bar. It reads like a proper dark‑mode app.
+
+### Livelier animation
+
+The background scan sweep is brighter and quicker, the accent line shimmers, and the bolt in the logo gives a gentle pulse.
 
 ### What's in the download
 

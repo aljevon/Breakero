@@ -16,29 +16,55 @@ func shQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
-// repro builds a copy-pasteable reproduction block: a curl command plus an
-// optional browser step. curl.exe ships with Windows 10+, so the same command
-// works on Windows, Linux and macOS.
+// winEsc escapes a value for a double-quoted Windows command argument.
+func winEsc(s string) string { return strings.ReplaceAll(s, `"`, `""`) }
+
+// repro builds a detailed, beginner-friendly reproduction block: exact commands
+// for Windows (PowerShell), Linux and macOS, plus a browser step and what to
+// look for. It is written so someone who has never used a terminal can follow
+// it and cross-check the finding by hand.
 func repro(method, u string, headers map[string]string, browser string) string {
-	cmd := "curl -i"
-	if m := strings.ToUpper(strings.TrimSpace(method)); m != "" && m != "GET" {
-		cmd += " -X " + m
-	}
 	keys := make([]string, 0, len(headers))
 	for k := range headers {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	for _, k := range keys {
-		cmd += " -H " + shQuote(k+": "+headers[k])
-	}
-	cmd += " " + shQuote(u)
 
-	out := "curl (Windows / Linux / macOS):\n" + cmd
-	if browser != "" {
-		out += "\n\nbrowser:\n" + browser
+	verb := ""
+	if m := strings.ToUpper(strings.TrimSpace(method)); m != "" && m != "GET" {
+		verb = " -X " + m
 	}
-	return out
+
+	winH, nixH := "", ""
+	for _, k := range keys {
+		v := headers[k]
+		winH += ` -H "` + winEsc(k+": "+v) + `"`
+		nixH += " -H " + shQuote(k+": "+v)
+	}
+	win := `curl.exe -i` + verb + winH + ` "` + winEsc(u) + `"`
+	nix := "curl -i" + verb + nixH + " " + shQuote(u)
+
+	var b strings.Builder
+	b.WriteString("Confirm it by hand. Any one of these does the job.\n\n")
+	b.WriteString("Windows\n")
+	b.WriteString("  1. Press the Start button, type: powershell, and open Windows PowerShell.\n")
+	b.WriteString("  2. Paste this and press Enter:\n     ")
+	b.WriteString(win)
+	b.WriteString("\n  (type curl.exe, not curl. In PowerShell plain 'curl' is a different, older command.)\n\n")
+	b.WriteString("Linux or macOS\n")
+	b.WriteString("  1. Open a terminal.\n")
+	b.WriteString("  2. Paste this and press Enter:\n     ")
+	b.WriteString(nix)
+	b.WriteString("\n\n")
+	if browser != "" {
+		b.WriteString("Browser (any system)\n  ")
+		b.WriteString(browser)
+		b.WriteString("\n\n")
+	}
+	b.WriteString("What to look at: the first line of the reply is the status. \"200\" means the server " +
+		"handed the content over. If you get the real page instead of a login screen or an " +
+		"\"access denied\", the finding is real.")
+	return b.String()
 }
 
 // roleLabel returns a friendly label for a role, treating level 0 as anonymous.

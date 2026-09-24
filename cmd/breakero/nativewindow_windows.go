@@ -43,10 +43,41 @@ func runNativeWindow(url string) bool {
 	}
 	defer w.Destroy()
 
-	setWindowIcon(uintptr(w.Window()))
+	hwnd := uintptr(w.Window())
+	setWindowIcon(hwnd)
+	setDarkTitleBar(hwnd)
 	w.Navigate(url)
 	w.Run() // blocks until the window is closed
 	return true
+}
+
+// setDarkTitleBar gives the window a dark title bar that matches the app,
+// instead of the default white one, so it reads as a real dark-mode app. On
+// Windows 11 it also tints the caption and text to the app's own colours. Any
+// call that the running Windows build does not support returns an error that we
+// simply ignore.
+func setDarkTitleBar(hwnd uintptr) {
+	if hwnd == 0 {
+		return
+	}
+	dwm := syscall.NewLazyDLL("dwmapi.dll")
+	set := dwm.NewProc("DwmSetWindowAttribute")
+
+	const (
+		dwmDarkMode20 = 20 // DWMWA_USE_IMMERSIVE_DARK_MODE (Windows 10 2004+)
+		dwmDarkMode19 = 19 // same attribute on Windows 10 1809/1903/1909
+		dwmCaption    = 35 // DWMWA_CAPTION_COLOR (Windows 11)
+		dwmText       = 36 // DWMWA_TEXT_COLOR   (Windows 11)
+	)
+	enabled := int32(1)
+	if r, _, _ := set.Call(hwnd, dwmDarkMode20, uintptr(unsafe.Pointer(&enabled)), 4); r != 0 {
+		set.Call(hwnd, dwmDarkMode19, uintptr(unsafe.Pointer(&enabled)), 4)
+	}
+	// COLORREF is 0x00BBGGRR. App background #0b0b0c, text #e8e8ea.
+	caption := uint32(0x000C0B0B)
+	set.Call(hwnd, dwmCaption, uintptr(unsafe.Pointer(&caption)), 4)
+	text := uint32(0x00EAE8E8)
+	set.Call(hwnd, dwmText, uintptr(unsafe.Pointer(&text)), 4)
 }
 
 // setWindowIcon puts the Breakero icon on the window and taskbar by loading the

@@ -26,11 +26,15 @@ body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
   background:
     repeating-linear-gradient(0deg,transparent 0 39px,rgba(255,255,255,.014) 39px 40px),
     repeating-linear-gradient(90deg,transparent 0 39px,rgba(255,255,255,.014) 39px 40px);}
-body::after{content:"";position:fixed;left:0;right:0;top:0;height:140px;z-index:-1;pointer-events:none;
-  background:linear-gradient(180deg,transparent,rgba(242,134,10,.05),transparent);
-  animation:scan 7.5s linear infinite;}
-@keyframes scan{0%{transform:translateY(-160px)}100%{transform:translateY(100vh)}}
-@media (prefers-reduced-motion:reduce){body::after{display:none}}
+body::after{content:"";position:fixed;left:0;right:0;top:0;height:190px;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,transparent 0%,rgba(242,134,10,.12) 44%,rgba(255,197,140,.26) 50%,rgba(242,134,10,.12) 56%,transparent 100%);
+  animation:scan 4.2s cubic-bezier(.4,0,.6,1) infinite;}
+@keyframes scan{0%{transform:translateY(-200px)}100%{transform:translateY(100vh)}}
+@keyframes shimmer{0%{background-position:0 0}100%{background-position:200% 0}}
+@keyframes pulse{0%,100%{opacity:.8;filter:none}50%{opacity:1;filter:drop-shadow(0 0 4px rgba(242,134,10,.85))}}
+.rule.acc{background:linear-gradient(90deg,#c96b00,#ffc98a,#f2860a,#ffc98a,#c96b00);background-size:220% 100%;animation:shimmer 3.2s linear infinite}
+.bolt{animation:pulse 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){body::after,.bolt{animation:none}.rule.acc{animation:none;background:var(--acc)}}
 
 .wrap{max-width:1000px;margin:0 auto;padding:0 18px 72px}
 
@@ -175,7 +179,7 @@ details.adv[open] summary::before{content:"[-] "}
     <svg class="mark" viewBox="0 0 256 256" fill="none" aria-hidden="true">
       <path d="M128 42 L192 66 V126 C192 168 163 196 128 212 C93 196 64 168 64 126 V66 Z" fill="none" stroke="#e8e8ea" stroke-width="8" stroke-linejoin="round"/>
       <circle cx="128" cy="118" r="17" fill="none" stroke="#e8e8ea" stroke-width="8"/>
-      <path d="M148 54 L110 118 L134 124 L98 196" fill="none" stroke="#f2860a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="bolt" d="M148 54 L110 118 L134 124 L98 196" fill="none" stroke="#f2860a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     <div>
       <div class="title"><b>breakero</b> — broken access control scanner</div>
@@ -374,14 +378,16 @@ function renderSummary(ev){const s=ev.summary||{};
 
 function showErr(m){const e=$('#err');e.textContent=m;e.classList.add('on');}
 
-/* downloads: fetch as blob and save, never navigate the window */
-async function download(kind){
-  try{const r=await fetch('/api/report.'+kind,{headers:H});
-    if(!r.ok){setStatus('run a scan first, then download.');return;}
-    const blob=await r.blob(); const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='breakero-report.'+kind;
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
-  }catch(e){setStatus('could not save the report: '+e.message);}
+/* downloads: point a download link straight at the endpoint. no fetch, so a
+   busy or briefly-throttled connection can't turn it into "failed to fetch",
+   and the download attribute means it saves instead of navigating the window. */
+function download(kind){
+  if(!haveResult){setStatus('run a scan first, then download.');return;}
+  const a=document.createElement('a');
+  a.href='/api/report.'+kind+'?t='+encodeURIComponent(token)+'&dl='+Date.now();
+  a.download='breakero-report.'+kind; a.rel='noopener';
+  document.body.appendChild(a); a.click(); setTimeout(()=>a.remove(),1000);
+  setStatus('saved breakero-report.'+kind+' to your downloads.');
 }
 $('#dlHtml').addEventListener('click',()=>download('html'));
 $('#dlJson').addEventListener('click',()=>download('json'));
