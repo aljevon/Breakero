@@ -206,7 +206,7 @@ func RenderHTML(res *engine.Result, version string) []byte {
 		`something they should not be allowed to. Each finding below explains, in plain ` +
 		`language, what was observed, why it matters, and how a developer fixes it. ` +
 		`Findings marked <em>needs-review</em> should be confirmed by hand before you report ` +
-		`them — automated tools can be fooled by unusual apps.</p></section>`)
+		`them, since automated tools can be fooled by unusual apps.</p></section>`)
 
 	if len(res.Findings) == 0 {
 		b.WriteString(`<section class="card"><p>No access-control issues were detected by the ` +
@@ -241,7 +241,7 @@ func RenderHTML(res *engine.Result, version string) []byte {
 	}
 
 	// Coverage.
-	b.WriteString(`<section class="card"><h2>Coverage — what was tested</h2><table class="cov"><tr>` +
+	b.WriteString(`<section class="card"><h2>Coverage: what was tested</h2><table class="cov"><tr>` +
 		`<th>Module</th><th>Description</th><th>Result</th></tr>`)
 	for _, run := range res.CheckLog {
 		result := fmt.Sprintf("%d finding(s)", run.Findings)
@@ -277,26 +277,26 @@ func truncate(s string, n int) string {
 }
 
 const reportCSS = `
-:root{--bg:#0f1117;--card:#1a1d27;--ink:#e7e9ee;--muted:#9aa0ac;--line:#2a2e3a;
---crit:#c026d3;--high:#ef4444;--med:#f59e0b;--low:#06b6d4;--info:#94a3b8;--accent:#6366f1}
+:root{--bg:#0b0b0c;--card:#0f0f11;--ink:#e8e8ea;--muted:#9a9aa2;--line:#26262b;
+--crit:#f2860a;--high:#f2860a;--med:#cfcfd4;--low:#8a8a92;--info:#6a6a72;--accent:#f2860a}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
-font:15px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:0 16px 64px}
+font:14px/1.55 ui-monospace,"SFMono-Regular","JetBrains Mono",Menlo,Consolas,monospace;padding:0 16px 64px}
 header{max-width:900px;margin:0 auto;padding:32px 0 8px}
 h1{margin:0;font-size:30px;letter-spacing:.5px}
 .sub{color:var(--muted);margin:4px 0 0}
 section{max-width:900px;margin:16px auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:18px 20px}
 .meta table{width:100%;border-collapse:collapse}
 .meta th{text-align:left;color:var(--muted);font-weight:600;width:150px;padding:4px 8px;vertical-align:top}
 .meta td{padding:4px 8px}
 .chips{display:flex;gap:8px;flex-wrap:wrap;max-width:900px;margin:12px auto}
-.chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;color:#0b0d12}
-.sev-critical{background:var(--crit);color:#fff}
-.sev-high{background:var(--high);color:#fff}
-.sev-medium{background:var(--med)}
-.sev-low{background:var(--low)}
-.sev-info{background:var(--info)}
+.chip{display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700;color:#0b0d12}
+.sev-critical{background:var(--crit);color:#0a0a0a}
+.sev-high{background:transparent;border:1px solid var(--high);color:var(--high)}
+.sev-medium{background:transparent;border:1px solid var(--line);color:var(--med)}
+.sev-low{background:transparent;border:1px solid var(--line);color:var(--low)}
+.sev-info{background:transparent;border:1px solid var(--line);color:var(--info)}
 .learn p{color:var(--ink)}
 .finding{border-left:5px solid var(--line)}
 .sev-border-critical{border-left-color:var(--crit)}
@@ -306,12 +306,12 @@ section{max-width:900px;margin:16px auto}
 .sev-border-info{border-left-color:var(--info)}
 .fhead{display:flex;align-items:center;gap:10px}
 .fhead h3{margin:0;font-size:18px}
-.url code{background:#0b0d12;padding:4px 8px;border-radius:6px;display:inline-block;word-break:break-all}
+.url code{background:#0b0d12;padding:4px 8px;border-radius:4px;display:inline-block;word-break:break-all}
 .conf{color:var(--muted);font-size:13px;margin:6px 0}
 .field{margin:10px 0}
 .flabel{display:block;text-transform:uppercase;font-size:11px;letter-spacing:.6px;color:var(--accent);font-weight:700;margin-bottom:2px}
 .field p{margin:0}
-.repro{white-space:pre-wrap;word-break:break-word;background:#0b0d12;border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:#c9cde0}
+.repro{white-space:pre-wrap;word-break:break-word;background:#0b0d12;border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:#c9cde0}
 .ref{color:var(--muted);font-size:12px;margin-top:12px}
 .cov{width:100%;border-collapse:collapse}
 .cov th,.cov td{text-align:left;border-bottom:1px solid var(--line);padding:6px 8px;font-size:14px}

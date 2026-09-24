@@ -1,38 +1,8 @@
 <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Breakero logo">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#12141c"/>
-      <stop offset="1" stop-color="#1b1e2b"/>
-    </linearGradient>
-    <linearGradient id="shield" x1="60" y1="36" x2="196" y2="220" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6366f1"/>
-      <stop offset="1" stop-color="#c026d3"/>
-    </linearGradient>
-    <linearGradient id="crack" x1="128" y1="60" x2="128" y2="196" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#f8fafc"/>
-      <stop offset="1" stop-color="#f59e0b"/>
-    </linearGradient>
-    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="6" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-
-  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
-  <rect x="1.5" y="1.5" width="253" height="253" rx="54.5" fill="none" stroke="#2a2e3a" stroke-width="3"/>
-
-  <!-- shield -->
-  <path d="M128 40 L196 66 V128 C196 172 166 202 128 218 C90 202 60 172 60 128 V66 Z"
-        fill="url(#shield)" opacity="0.16"/>
-  <path d="M128 40 L196 66 V128 C196 172 166 202 128 218 C90 202 60 172 60 128 V66 Z"
-        fill="none" stroke="url(#shield)" stroke-width="7" stroke-linejoin="round"/>
-
-  <!-- keyhole -->
-  <circle cx="128" cy="116" r="19" fill="none" stroke="url(#shield)" stroke-width="7"/>
-  <path d="M128 132 L120 168 H136 Z" fill="url(#shield)"/>
-
-  <!-- break / fracture bolt cutting across the shield -->
-  <path d="M150 52 L108 116 L134 122 L96 200"
-        fill="none" stroke="url(#crack)" stroke-width="8"
-        stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <rect x="1" y="1" width="254" height="254" rx="20" fill="#0f0f11" stroke="#26262b" stroke-width="2"/>
+  <path d="M128 42 L192 66 V126 C192 168 163 196 128 212 C93 196 64 168 64 126 V66 Z"
+        fill="none" stroke="#e8e8ea" stroke-width="8" stroke-linejoin="round"/>
+  <circle cx="128" cy="118" r="17" fill="none" stroke="#e8e8ea" stroke-width="8"/>
+  <path d="M148 54 L110 118 L134 124 L98 196"
+        fill="none" stroke="#f2860a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

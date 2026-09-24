@@ -4,6 +4,14 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-09-24
+
+### Changed
+- New visual identity that matches the app. The logo, window/file icon, README
+  banner and the HTML report all move to the dark monochrome look with a single
+  amber accent (white shield, amber bolt). The old purple/indigo styling is gone.
+- The README no longer uses decorative emoji in its headings.
+
 ## [1.3.0] - 2026-09-24
 
 ### Added
@@ -79,6 +87,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.3.1]: https://github.com/aljevon/Breakero/releases/tag/v1.3.1
 [1.3.0]: https://github.com/aljevon/Breakero/releases/tag/v1.3.0
 [1.2.0]: https://github.com/aljevon/Breakero/releases/tag/v1.2.0
 [1.1.1]: https://github.com/aljevon/Breakero/releases/tag/v1.1.1
