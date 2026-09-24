@@ -110,6 +110,17 @@ details.adv[open] summary::before{content:"[-] "}
 .err{border:1px solid var(--acc);color:var(--acc);border-radius:var(--r);padding:10px 12px;margin-top:12px;font-size:12.5px;display:none}
 .err.on{display:block}
 
+/* faint centred handle at the very top, like a subtitle under the window bar */
+.topbar{text-align:center;font-size:11px;letter-spacing:2px;color:var(--ink);opacity:.14;padding:5px 0 3px;user-select:none}
+
+/* verify-before-you-trust panel + references */
+.notepanel .disc{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+.reflist{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
+@media(max-width:620px){.reflist{grid-template-columns:1fr}}
+.reflist a{color:var(--muted);text-decoration:none;font-size:12px;border-bottom:1px solid var(--line);padding:3px 0;display:block}
+.reflist a:hover{color:var(--acc);border-color:var(--acc)}
+.reflist a::before{content:"→ ";color:var(--acc)}
+
 /* results */
 .results{display:none}
 .results.on{display:block}
@@ -173,6 +184,7 @@ details.adv[open] summary::before{content:"[-] "}
 </style>
 </head>
 <body>
+<div class="topbar">github.com/aljevon</div>
 <div class="wrap">
 
   <header>
@@ -255,9 +267,19 @@ details.adv[open] summary::before{content:"[-] "}
     <div class="cov" id="coverage" style="display:none"></div>
   </div>
 
+  <section class="panel notepanel">
+    <div class="h">verify before you trust</div>
+    <div class="pad">
+      <p class="disc">these results come from an automated scanner. treat them as leads, not conclusions. every finding
+      can be a false positive, and a clean scan is not proof of security. confirm each one by hand using its
+      "how to reproduce" steps, then dig deeper with manual testing before you report anything. only test what
+      you are allowed to test.</p>
+      <div class="reflist" id="reflist"></div>
+    </div>
+  </section>
+
   <div class="foot">
-    only test what you are allowed to test ·
-    <a href="https://top10.owasp.org/2025/A01_2025-Broken_Access_Control/" target="_blank" rel="noopener">owasp a01:2025</a>
+    breakero · <a href="https://github.com/aljevon" target="_blank" rel="noopener">github.com/aljevon</a> · only test what you are allowed to test
   </div>
 </div>
 
@@ -268,7 +290,18 @@ const $=s=>document.querySelector(s);
 const token=new URLSearchParams(location.search).get('t')||'';
 const H={'X-Breakero-Token':token,'Content-Type':'application/json'};
 const SEV={4:['CRIT','crit'],3:['HIGH','high'],2:['MED','med'],1:['LOW','low'],0:['INFO','info']};
-let selected=new Set(), findings=[], coverage=[], controller=null, running=false, haveResult=false;
+let selected=new Set(), findings=[], coverage=[], controller=null, running=false, haveResult=false, meta={};
+const REFS=[
+  ['OWASP Top 10 2025 — A01 Broken Access Control','https://top10.owasp.org/2025/A01_2025-Broken_Access_Control/'],
+  ['PortSwigger — Access control vulnerabilities','https://portswigger.net/web-security/access-control'],
+  ['PortSwigger — IDOR','https://portswigger.net/web-security/access-control/idor'],
+  ['OWASP Web Security Testing Guide — Authorization','https://owasp.org/www-project-web-security-testing-guide/'],
+  ['CWE-284 — Improper Access Control','https://cwe.mitre.org/data/definitions/284.html'],
+  ['CWE-639 — Authorization Bypass Through User-Controlled Key','https://cwe.mitre.org/data/definitions/639.html']
+];
+const DISCLAIMER='These results are produced by an automated scanner. Treat them as leads, not conclusions. '+
+  'Every finding can be a false positive, and a clean scan is not proof of security. Confirm each one by hand '+
+  '(see "how to reproduce") and dig deeper with manual testing before you report anything. Only test systems you are authorized to test.';
 
 /* cursor tooltip */
 const tip=$('#tip');
@@ -281,6 +314,10 @@ document.addEventListener('mouseout',e=>{if(e.target.closest('[data-tip]'))tip.c
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function setState(s){$('#statechip').textContent=s;}
 function setStatus(html){$('#status').innerHTML=html;}
+
+/* references in the footer */
+document.getElementById('reflist').innerHTML =
+  REFS.map(r=>`<a href="${r[1]}" target="_blank" rel="noopener">${esc(r[0])}</a>`).join('');
 
 /* load checks */
 fetch('/api/checks',{headers:H}).then(r=>r.json()).then(d=>{
@@ -308,6 +345,7 @@ $('#scan').addEventListener('click',()=>{ if(running){ controller&&controller.ab
 
 async function runScan(){
   running=true; haveResult=false; findings=[]; coverage=[];
+  meta={target:$('#url').value.trim(), scope:[], requests:0, durationMs:0, summary:{}, started:new Date().toISOString()};
   $('#err').classList.remove('on'); $('#findings').innerHTML=''; $('#coverage').style.display='none';
   $('#dlHtml').disabled=true; $('#dlJson').disabled=true;
   $('#results').classList.add('on'); renderSummary({});
@@ -326,12 +364,13 @@ async function runScan(){
       buf+=dec.decode(value,{stream:true}); let nl;
       while((nl=buf.indexOf('\n'))>=0){const line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1); if(!line)continue;
         const ev=JSON.parse(line);
-        if(ev.type==='start'){total=ev.total||1;}
+        if(ev.type==='start'){total=ev.total||1; meta.scope=ev.scope||[];}
         if(ev.type==='check'){done++; $('#bar').style.width=Math.min(96,5+done/total*90)+'%';
           setStatus('running <span class="live">'+esc(ev.id)+'</span> · '+done+'/'+total+' checks · '+findings.length+' found so far'); addCov(ev);}
         if(ev.type==='finding'){findings.push(ev.finding); haveResult=true; renderFindings(); enableDl();}
         if(ev.type==='error'){showErr(ev.message);}
         if(ev.type==='done'){renderSummary(ev); haveResult=true; enableDl();
+          meta.summary=ev.summary||{}; meta.requests=ev.requests||0; meta.durationMs=ev.durationMs||0;
           setStatus('done · '+ev.total+' finding'+(ev.total===1?'':'s')+' · '+ev.requests+' requests');}
       }
     }
@@ -378,17 +417,88 @@ function renderSummary(ev){const s=ev.summary||{};
 
 function showErr(m){const e=$('#err');e.textContent=m;e.classList.add('on');}
 
-/* downloads: point a download link straight at the endpoint. no fetch, so a
-   busy or briefly-throttled connection can't turn it into "failed to fetch",
-   and the download attribute means it saves instead of navigating the window. */
+/* downloads: build the report right here from data the page already has, and
+   save it as a blob. no request to the local server at all, so a browser that
+   refuses http downloads (network issue) or a busy connection can't break it. */
 function download(kind){
   if(!haveResult){setStatus('run a scan first, then download.');return;}
-  const a=document.createElement('a');
-  a.href='/api/report.'+kind+'?t='+encodeURIComponent(token)+'&dl='+Date.now();
-  a.download='breakero-report.'+kind; a.rel='noopener';
-  document.body.appendChild(a); a.click(); setTimeout(()=>a.remove(),1000);
-  setStatus('saved breakero-report.'+kind+' to your downloads.');
+  try{
+    const text = kind==='json' ? buildJSON() : buildHTML();
+    const type = kind==='json' ? 'application/json' : 'text/html';
+    const blob = new Blob([text], {type:type+';charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='breakero-report.'+kind;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{a.remove(); URL.revokeObjectURL(a.href);}, 2000);
+    setStatus('saved breakero-report.'+kind+' to your downloads.');
+  }catch(e){ setStatus('could not build the report: '+e.message); }
 }
+
+function buildJSON(){
+  return JSON.stringify({
+    tool:'Breakero', version:($('#ver').textContent||'').replace(/^v/,''),
+    standard:'OWASP Top 10 2025 - A01 Broken Access Control',
+    target:meta.target, scope:meta.scope, started:meta.started,
+    requests:meta.requests, duration_ms:meta.durationMs, summary:meta.summary,
+    findings:findings, coverage:coverage,
+    references:REFS.map(r=>({title:r[0],url:r[1]})),
+    disclaimer:DISCLAIMER
+  }, null, 2);
+}
+
+function buildHTML(){
+  const sorted=[...findings].sort((a,b)=>b.severity-a.severity);
+  const sevName={4:'CRITICAL',3:'HIGH',2:'MEDIUM',1:'LOW',0:'INFO'};
+  const sevCls={4:'crit',3:'high',2:'med',1:'low',0:'info'};
+  const s=meta.summary||{};
+  const chip=(k)=>`<span class="chip ${k}">${k.toUpperCase()}: ${s[k]||0}</span>`;
+  const fhtml=sorted.map((f,i)=>{const cls=sevCls[f.severity]||'info';
+    return `<section class="f b-${cls}"><div class="fh"><span class="tag ${cls}">${sevName[f.severity]||'INFO'}</span>`+
+      `<h3>${i+1}. ${esc(f.title)}</h3></div>`+
+      (f.url?`<p class="u"><code>${esc((f.method||'GET')+' '+f.url)}</code></p>`:'')+
+      `<p class="c">confidence: ${esc(f.confidence||'')} · module: ${esc(f.check||'')}</p>`+
+      (f.what_it_means?kv('what it means',f.what_it_means):'')+
+      (f.evidence?kv('evidence',f.evidence):'')+
+      (f.repro?`<div class="kv"><span class="k">how to reproduce (cross-check by hand)</span><pre>${esc(f.repro)}</pre></div>`:'')+
+      (f.remediation?kv('how to fix',f.remediation):'')+
+      `<p class="r">${esc(f.reference||'')}</p></section>`;}).join('');
+  const cov=(coverage||[]).map(c=>`<tr><td><code>${esc(c.id)}</code></td><td>${esc(c.title)}</td><td>${c.err?'error':((c.count||0)+' finding'+((c.count===1)?'':'s'))}</td></tr>`).join('');
+  const refs=REFS.map(r=>`<li><a href="${r[1]}">${esc(r[0])}</a></li>`).join('');
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Breakero report</title><style>${REPORT_CSS}</style></head><body><div class="wrap">`+
+    `<header><h1>breakero</h1><p class="sub">broken access control report · owasp top 10 2025 · a01</p></header>`+
+    `<section class="card"><table class="meta">`+
+      row('target',meta.target)+row('in scope',(meta.scope||[]).join(', '))+
+      row('requests',String(meta.requests))+row('duration',(meta.durationMs/1000).toFixed(1)+'s')+
+      row('started',meta.started||'')+row('findings',findings.length+'')+
+    `</table></section>`+
+    `<div class="chips">${['critical','high','medium','low','info'].map(chip).join('')}</div>`+
+    `<section class="card note"><b>read this first.</b> ${esc(DISCLAIMER)}</section>`+
+    (fhtml || '<section class="card">No access-control issues from the checks that ran. That is not a clean bill of health, only that these tests did not fire.</section>')+
+    `<section class="card"><h2>coverage — what was tested</h2><table class="cov"><tr><th>module</th><th>description</th><th>result</th></tr>${cov}</table></section>`+
+    `<section class="card"><h2>references</h2><ul class="refs">${refs}</ul></section>`+
+    `<footer>generated by breakero · github.com/aljevon · only test what you are allowed to test</footer>`+
+    `</div></body></html>`;
+  function row(k,v){return `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`;}
+}
+function kv(k,v){return `<div class="kv"><span class="k">${esc(k)}</span><p>${esc(v)}</p></div>`;}
+const REPORT_CSS=`:root{--bg:#0b0b0c;--card:#0f0f11;--line:#26262b;--ink:#e8e8ea;--muted:#9a9aa2;--acc:#f2860a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.55 ui-monospace,Consolas,monospace;padding:0 16px 60px}
+.wrap{max-width:900px;margin:0 auto}header{padding:26px 0 6px}h1{margin:0;font-size:24px;color:var(--acc)}.sub{color:var(--muted);font-size:12px;margin:2px 0 0}
+.card{border:1px solid var(--line);border-radius:4px;background:var(--card);padding:14px 16px;margin-top:14px}
+.meta{width:100%;border-collapse:collapse}.meta th{text-align:left;color:var(--muted);width:130px;font-weight:600;padding:3px 8px;vertical-align:top}.meta td{padding:3px 8px;word-break:break-all}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.chip{border:1px solid var(--line);border-radius:4px;padding:3px 9px;font-size:12px;font-weight:700}
+.chip.critical{background:var(--acc);color:#0a0a0a;border-color:var(--acc)}.chip.high{color:var(--acc);border-color:var(--acc)}.chip.medium,.chip.low,.chip.info{color:var(--muted)}
+.note{color:var(--muted)}.note b{color:var(--acc)}
+.f{border:1px solid var(--line);border-left:3px solid var(--line);border-radius:4px;background:var(--card);padding:12px 16px;margin-top:10px}
+.b-crit,.b-high{border-left-color:var(--acc)}.fh{display:flex;align-items:center;gap:10px}.fh h3{margin:0;font-size:15px}
+.tag{font-size:10px;font-weight:700;border:1px solid var(--line);border-radius:2px;padding:2px 6px;color:var(--muted)}.tag.crit{background:var(--acc);color:#0a0a0a;border-color:var(--acc)}.tag.high{color:var(--acc);border-color:var(--acc)}
+.u code{background:#08080a;border:1px solid var(--line);border-radius:4px;padding:6px 8px;display:inline-block;word-break:break-all;font-size:12px}
+.c{color:var(--muted);font-size:11.5px;margin:6px 0}.kv{margin:10px 0}.kv .k{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);margin-bottom:3px}.kv p{margin:0}
+.kv pre{white-space:pre-wrap;word-break:break-word;background:#08080a;border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin:0;font-size:12px;color:#cfd3df}
+.r{color:var(--muted);font-size:11px;margin-top:10px}
+.cov{width:100%;border-collapse:collapse}.cov th,.cov td{text-align:left;border-bottom:1px solid var(--line);padding:6px 8px;font-size:12px}
+.refs{margin:0;padding-left:18px}.refs a{color:var(--acc);text-decoration:none}
+footer{color:var(--muted);font-size:11px;text-align:center;margin-top:22px}a{color:var(--acc)}`;
 $('#dlHtml').addEventListener('click',()=>download('html'));
 $('#dlJson').addEventListener('click',()=>download('json'));
 

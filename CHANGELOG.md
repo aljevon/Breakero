@@ -4,6 +4,21 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-09-24
+
+### Fixed
+- Report download no longer fails with "network issue". The report is now built
+  inside the app from data it already has and saved as a file directly, with no
+  request to the local server, so a browser that blocks http downloads can't
+  break it.
+
+### Added
+- A "verify before you trust" note and a references section (OWASP A01,
+  PortSwigger access control and IDOR, OWASP WSTG, CWE-284, CWE-639) at the
+  bottom of the app and in the HTML report. The note makes clear the results are
+  automated leads to confirm by hand, not proof.
+- A faint "github.com/aljevon" line at the top of the app window.
+
 ## [1.4.0] - 2026-09-24
 
 ### Added
@@ -124,6 +139,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.4.1]: https://github.com/aljevon/Breakero/releases/tag/v1.4.1
 [1.4.0]: https://github.com/aljevon/Breakero/releases/tag/v1.4.0
 [1.3.2]: https://github.com/aljevon/Breakero/releases/tag/v1.3.2
 [1.3.1]: https://github.com/aljevon/Breakero/releases/tag/v1.3.1

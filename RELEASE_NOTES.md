@@ -1,22 +1,18 @@
-## Breakero v1.4.0
+## Breakero v1.4.1
 
-Stronger detection. Two new checks and some sharper existing ones, taking cues from the PortSwigger Web Security Academy access-control material.
+### Report download fixed for good
 
-### New: url-bypass
+Saving a report kept failing ("could not save the report" / "network issue") because the browser was being asked to download a file from the local server, and some browsers refuse http downloads. Now the report is built inside the app from the results already on screen and saved straight to a file, with no request to the server at all. Nothing to fail.
 
-A blocked path like `/admin` can often be reached a slightly different way, because a proxy or framework matches the URL as text while the app resolves it to the same page. This check tries the classics: a trailing slash, uppercase, an encoded slash, dot and semicolon segments (`/admin/.`, `/admin%2f`, `/admin..;/`), a double slash, and rewrite headers. If any of them gets in where the plain path was blocked, it flags it.
+### Verify-before-you-trust note and references
 
-### New: param-privilege
+The bottom of the app (and the HTML report) now spells out that these results are automated leads, not conclusions: any finding can be a false positive, a clean scan is not proof of security, and you should confirm each one by hand and dig deeper before reporting. Alongside it is a set of references to read up on the attacks:
 
-Some apps decide what you can do from something you send them: `?admin=true` in the URL, an `X-User-Role: admin` header, or an `isAdmin` cookie. This check adds those to blocked requests and sees whether they open up. If they do, the app trusted a value you controlled.
+- OWASP Top 10 2025 A01, PortSwigger access control and IDOR, OWASP Web Security Testing Guide, CWE-284, CWE-639.
 
-### Sharper existing checks
+### Small touch
 
-- forced-browse now reads robots.txt and sitemap.xml and tries the paths the site leaks there. robots.txt loves to list the exact admin URLs it wants hidden.
-- header-bypass covers more trusted headers, including Referer-based controls and True-Client-IP / X-Real-IP.
-- A longer built-in list of sensitive paths (swagger, graphql, actuator heapdump, phpmyadmin, .env and more).
-
-Same safety rails as always: it only touches the host you type, it's rate limited, and it won't run until you confirm you're authorized. Every finding still comes with step-by-step reproduction.
+A faint github.com/aljevon line sits at the top of the app window.
 
 ### Downloads
 
