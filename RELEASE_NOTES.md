@@ -1,12 +1,25 @@
-## Breakero v1.2.0
+## Breakero v1.3.0
 
-Windows now gets a full native desktop app. Double-click `breakero-windows-amd64.exe` and it opens as its own window, its own process, its own taskbar entry. No browser, nothing wrapped around it. Just Breakero.
+New look and a few things you asked for.
 
-It's drawn with WebView2, the engine that already comes with Windows 10 and 11, so there's nothing extra to install. If for some reason the WebView2 runtime isn't there, it quietly falls back to an app-mode window, and then to your default browser, so it always opens.
+### Reproduce every finding by hand
 
-The nice part: it's still a single exe with no C toolchain or extra DLLs to ship. macOS and Linux keep the dedicated app-mode window (Chrome, Chromium, Edge or Brave).
+Each finding now comes with a "how to reproduce" block: a curl command that works the same on Windows, Linux and macOS, plus a browser step. So you can cross-check anything the scanner reports before you write it up. It's in the app (with a copy button) and in the HTML report.
 
-Everything else is the same: type a URL, confirm you're authorized, scan, watch findings stream in, pull down an HTML or JSON report. Same engine and safety rails as the command line.
+### Stop a scan
+
+The scan button turns into a stop button while a scan is running. Hit it and the scan cancels straight away; whatever it already found stays on screen.
+
+### Redesigned interface
+
+Tighter, more of a tool and less of a website: a monospace editorial layout, hairline borders instead of drop shadows, one accent colour, and a quiet animated scan background. Findings and their names now show up live as the scan runs, not just at the end.
+
+### Fixes
+
+- The Windows app window now shows the Breakero icon.
+- Downloading a report used to navigate to a blank "no scan yet" page you couldn't get back from. Now it saves the file directly, and the buttons only light up once there's something to save.
+
+Everything else is unchanged: native window on Windows (WebView2), app-mode window on macOS and Linux, same engine and safety rails.
 
 ### What's in the download
 

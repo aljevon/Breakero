@@ -89,6 +89,9 @@ func (c *HeaderBypassCheck) Run(ctx *Context) ([]finding.Finding, error) {
 					WithEvidence(fmt.Sprintf("Plain request returned HTTP %d, but adding %q: %q (%s) "+
 						"returned HTTP %d.", base.Status, h.name, h.value, h.note, resp.Status)).
 					WithConfidence("likely").
+					WithRepro(repro("GET", u, map[string]string{h.name: h.value},
+						"Resend the blocked request with the header "+h.name+": "+h.value+" added. "+
+							"If the page now returns, that header is trusted for access decisions.")).
 					WithRemediation("Do not make authorization decisions from client-supplied headers. Strip "+
 						"or normalize X-Forwarded-* and X-Original-URL/X-Rewrite-URL at the trusted edge, and "+
 						"enforce the real access-control check in the application against the authenticated "+

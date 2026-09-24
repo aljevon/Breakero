@@ -99,6 +99,9 @@ func (c *UnauthCheck) Run(ctx *Context) ([]finding.Finding, error) {
 			WithMeaning(meaning).
 			WithEvidence(evidence).
 			WithConfidence(conf).
+			WithRepro(repro(method, u, anon.Headers,
+				"Open a private/incognito window (so you are logged out) and visit the URL. "+
+					"If the protected content loads, it is reachable with no authentication.")).
 			WithRemediation("Require authentication on this endpoint at the server side. Enforce it " +
 				"in middleware or a filter that runs before the handler, deny by default, and never " +
 				"rely on the UI hiding a link. Verify the session/token on every request.")

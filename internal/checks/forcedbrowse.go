@@ -80,6 +80,9 @@ func (c *ForcedBrowseCheck) Run(ctx *Context) ([]finding.Finding, error) {
 			WithMeaning(c.Teaches()).
 			WithEvidence("Direct request without credentials succeeded: "+evidenceForResponse(resp)).
 			WithConfidence("likely").
+			WithRepro(repro("GET", u, anon.Headers,
+				"Paste the URL into a private/incognito window (logged out). If the page opens, "+
+					"the path is reachable by anyone who guesses it.")).
 			WithRemediation(fmt.Sprintf(
 				"Protect %q behind authentication and authorization, or remove it from the "+
 					"public server entirely if it is not meant to be exposed. For framework "+

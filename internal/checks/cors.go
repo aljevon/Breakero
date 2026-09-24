@@ -77,6 +77,9 @@ func (c *CORSCheck) Run(ctx *Context) ([]finding.Finding, error) {
 					WithEvidence(fmt.Sprintf("Origin %q was reflected as Access-Control-Allow-Origin=%q "+
 						"together with Access-Control-Allow-Credentials: true.", origin, acao)).
 					WithConfidence("likely").
+					WithRepro(repro("GET", u, map[string]string{"Origin": origin},
+						"Add the header Origin: "+origin+" to a request. If the response reflects it in "+
+							"Access-Control-Allow-Origin with credentials, another site can read this data.")).
 					WithRemediation("Never reflect the Origin header blindly. Maintain a strict allow-list of "+
 						"trusted origins, and only send Access-Control-Allow-Credentials: true for those exact "+
 						"origins. Never combine credentials with a wildcard or a reflected/null origin."))
@@ -88,6 +91,9 @@ func (c *CORSCheck) Run(ctx *Context) ([]finding.Finding, error) {
 					WithEvidence(fmt.Sprintf("Origin %q was reflected as Access-Control-Allow-Origin. "+
 						"Credentials are not allowed, which limits (but does not remove) the risk.", origin)).
 					WithConfidence("needs-review").
+					WithRepro(repro("GET", u, map[string]string{"Origin": origin},
+						"Add the header Origin: "+origin+" to a request. If the response reflects it in "+
+							"Access-Control-Allow-Origin with credentials, another site can read this data.")).
 					WithRemediation("Reflect only origins from a vetted allow-list rather than echoing whatever "+
 						"the client sends."))
 			case wildcard && acac:
@@ -98,6 +104,9 @@ func (c *CORSCheck) Run(ctx *Context) ([]finding.Finding, error) {
 					WithEvidence("Access-Control-Allow-Origin: * combined with Allow-Credentials: true "+
 						"(browsers reject this combination, but it signals a misunderstanding of the policy).").
 					WithConfidence("needs-review").
+					WithRepro(repro("GET", u, map[string]string{"Origin": origin},
+						"Add the header Origin: "+origin+" to a request. If the response reflects it in "+
+							"Access-Control-Allow-Origin with credentials, another site can read this data.")).
 					WithRemediation("Do not use a wildcard origin when credentials are involved. Use an explicit "+
 						"allow-list of origins."))
 			}

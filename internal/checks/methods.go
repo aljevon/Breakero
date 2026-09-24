@@ -89,6 +89,9 @@ func (c *MethodCheck) Run(ctx *Context) ([]finding.Finding, error) {
 				WithEvidence(fmt.Sprintf("GET returned HTTP %d (denied) but %s returned HTTP %d.",
 					base.Status, verb, resp.Status)).
 				WithConfidence("needs-review").
+				WithRepro(repro(verb, u, anon.Headers,
+					"Resend the request using the "+verb+" method (curl -X, or Burp Repeater). "+
+						"If it succeeds while GET is blocked, the rule misses this method.")).
 				WithRemediation("Apply authorization uniformly to every HTTP method on a route, and reject "+
 					"unknown/unsupported methods with 405. Do not allow-list only a subset of verbs in "+
 					"the access-control layer."))

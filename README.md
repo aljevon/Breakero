@@ -66,6 +66,7 @@ Prefer the command line? That still works too, same engine underneath. See [Quic
 - **It explains itself.** Type `breakero -explain` and it talks you through every check in normal language. The HTML report opens with a short intro for people who are new to this.
 - **Hard to misuse.** There's a speed limit, a cap on total requests, a scope lock, and it stays read-only until you say otherwise. You won't knock a site over by accident.
 - **Reports you can hand to someone.** Color in the terminal, a single HTML file you can email, and JSON if you'd rather script around it.
+- **Cross-check by hand.** Every finding comes with a curl command (Windows, Linux, macOS) and a browser step, so you can reproduce it yourself before you report it.
 - **Less noise.** Plenty of scanners scream about every path they guess. This one notices when a server answers "200 OK" to things that don't exist and quiets down.
 
 ## 🛡 Staying out of trouble

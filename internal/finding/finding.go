@@ -85,6 +85,10 @@ type Finding struct {
 	Evidence string `json:"evidence"`
 	// Remediation is how a developer should fix the underlying issue.
 	Remediation string `json:"remediation"`
+	// Repro is a copy-pasteable way to confirm the finding by hand: a curl
+	// command and a browser step, so it can be cross-checked on Windows, Linux
+	// or macOS before you report it.
+	Repro string `json:"repro,omitempty"`
 	// Reference points back to the relevant OWASP A01:2025 guidance.
 	Reference string `json:"reference"`
 	// Confidence is a rough label: "confirmed", "likely", or "needs-review".
@@ -120,6 +124,9 @@ func (f Finding) WithEvidence(s string) Finding { f.Evidence = s; return f }
 
 // WithRemediation sets the remediation text.
 func (f Finding) WithRemediation(s string) Finding { f.Remediation = s; return f }
+
+// WithRepro sets the manual reproduction steps.
+func (f Finding) WithRepro(s string) Finding { f.Repro = s; return f }
 
 // WithConfidence sets the confidence label.
 func (f Finding) WithConfidence(s string) Finding { f.Confidence = s; return f }

@@ -3,11 +3,43 @@ package checks
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/aljevon/breakero/internal/config"
 	"github.com/aljevon/breakero/internal/httpx"
 )
+
+// shQuote wraps a string in single quotes for a shell, escaping any embedded
+// single quotes. Good enough for curl commands people paste to verify a finding.
+func shQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// repro builds a copy-pasteable reproduction block: a curl command plus an
+// optional browser step. curl.exe ships with Windows 10+, so the same command
+// works on Windows, Linux and macOS.
+func repro(method, u string, headers map[string]string, browser string) string {
+	cmd := "curl -i"
+	if m := strings.ToUpper(strings.TrimSpace(method)); m != "" && m != "GET" {
+		cmd += " -X " + m
+	}
+	keys := make([]string, 0, len(headers))
+	for k := range headers {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		cmd += " -H " + shQuote(k+": "+headers[k])
+	}
+	cmd += " " + shQuote(u)
+
+	out := "curl (Windows / Linux / macOS):\n" + cmd
+	if browser != "" {
+		out += "\n\nbrowser:\n" + browser
+	}
+	return out
+}
 
 // roleLabel returns a friendly label for a role, treating level 0 as anonymous.
 func roleLabel(r config.Role) string {

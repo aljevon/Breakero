@@ -4,6 +4,25 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-24
+
+### Added
+- Every finding now includes "how to reproduce": a curl command that works on
+  Windows, Linux and macOS, plus a browser step, so you can confirm it by hand
+  before reporting. Shown in the app (with a copy button) and in the HTML report.
+- A stop button. The Scan button turns into Stop while a scan runs and cancels
+  it cleanly; partial results stay on screen.
+
+### Changed
+- Redesigned the app interface: a tight monospace, editorial layout with hairline
+  borders (no shadows or gradients), a single accent colour, and a subtle
+  animated scan background. Findings and their names stream in live during a scan.
+- The native Windows window now shows the Breakero icon.
+
+### Fixed
+- Report downloads no longer navigate the window to a "no scan yet" page. They
+  save the file directly and are enabled only once a scan has results.
+
 ## [1.2.0] - 2026-09-24
 
 ### Added
@@ -60,6 +79,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.3.0]: https://github.com/aljevon/Breakero/releases/tag/v1.3.0
 [1.2.0]: https://github.com/aljevon/Breakero/releases/tag/v1.2.0
 [1.1.1]: https://github.com/aljevon/Breakero/releases/tag/v1.1.1
 [1.1.0]: https://github.com/aljevon/Breakero/releases/tag/v1.1.0

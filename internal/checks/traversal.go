@@ -83,6 +83,9 @@ func (c *TraversalCheck) Run(ctx *Context) ([]finding.Finding, error) {
 					WithEvidence(fmt.Sprintf("Payload %q returned a response containing the signature %q, "+
 						"indicating a system file was read.", payload, sig)).
 					WithConfidence("confirmed").
+					WithRepro(repro("GET", u, anon.Headers,
+						"Open the URL. The path parameter escapes the intended folder; if a system "+
+							"file's contents come back, traversal works.")).
 					WithRemediation("Never build a filesystem path directly from user input. Resolve the "+
 						"requested path and confirm it stays within an allowed base directory, reject any "+
 						"input containing path separators or '..', and prefer an allow-list of known-good "+

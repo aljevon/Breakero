@@ -83,6 +83,9 @@ func (c *IDORCheck) Run(ctx *Context) ([]finding.Finding, error) {
 						WithEvidence(fmt.Sprintf("Requested as role %q using role %q's id %q: %s",
 							roleLabel(self), roleLabel(other), otherID, evidenceForResponse(resp))).
 						WithConfidence(conf).
+						WithRepro(repro(method, u, map[string]string{"Cookie": "<session for " + roleLabel(self) + ">"},
+							"Log in as "+roleLabel(self)+", then open the URL. It carries "+roleLabel(other)+
+								"'s id "+otherID+", so if their data loads the ownership check is missing.")).
 						WithRemediation("On every object lookup, verify the authenticated user is authorized "+
 							"for THAT specific object (ownership or an explicit grant). Do not trust an id from "+
 							"the request. Prefer server-side scoping (e.g. WHERE owner_id = current_user) and "+
@@ -136,6 +139,9 @@ func (c *IDORCheck) Run(ctx *Context) ([]finding.Finding, error) {
 									"(%.0f%% similar). Sequential ids are easy to enumerate.",
 								roleLabel(self), ownID, neighborID, sim*100)).
 							WithConfidence("needs-review").
+							WithRepro(repro(method, nu, map[string]string{"Cookie": "<your session>"},
+								"While logged in, open the URL. It uses id "+neighborID+", which you do not own. "+
+									"If a valid, different record loads, ids are guessable.")).
 							WithRemediation("Enforce per-object authorization and avoid sequential, guessable "+
 								"identifiers. Even with UUIDs, always check ownership server-side."))
 					}

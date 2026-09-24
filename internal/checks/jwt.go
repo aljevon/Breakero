@@ -90,6 +90,8 @@ func inspectJWT(id, teaches, role, tok string) []finding.Finding {
 			WithEvidence(fmt.Sprintf("Token %s header declares \"alg\":\"none\". An unsigned token can be "+
 				"edited freely.", shortTok)).
 			WithConfidence("confirmed").
+			WithRepro("Decode the header to confirm. Linux/macOS: printf %s <TOKEN> | cut -d. -f1 | base64 -d . "+
+				"Windows: paste the token at jwt.io. alg:none means the server may accept an unsigned, edited token.").
 			WithRemediation("Reject tokens with alg=none. Pin the expected algorithm server-side and verify "+
 				"the signature with a strong key before trusting any claim."))
 	}
@@ -126,6 +128,9 @@ func inspectJWT(id, teaches, role, tok string) []finding.Finding {
 					"unchecked, this is the value an attacker would tamper with to escalate.",
 					shortTok, claim, v)).
 				WithConfidence("needs-review").
+				WithRepro("Decode the payload. Linux/macOS: printf %s <TOKEN> | cut -d. -f2 | base64 -d . "+
+					"Windows: paste the token at jwt.io. The "+claim+" claim is what an attacker would edit; "+
+					"verify the server re-checks it instead of trusting the token.").
 				WithRemediation("Ensure the token signature is strong and always verified. Do not make trust "+
 					"decisions from a client-held claim without server-side validation; re-check authorization "+
 					"against a trusted store for sensitive actions."))

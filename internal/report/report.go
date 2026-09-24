@@ -63,6 +63,12 @@ func Console(res *engine.Result, color bool) {
 		printWrapped("      what it means: ", f.WhatItMeans)
 		printWrapped("      evidence:      ", f.Evidence)
 		printWrapped("      how to fix:    ", f.Remediation)
+		if strings.TrimSpace(f.Repro) != "" {
+			fmt.Printf("      %s\n", c(dim, "reproduce:"))
+			for _, line := range strings.Split(f.Repro, "\n") {
+				fmt.Printf("        %s\n", line)
+			}
+		}
 	}
 
 	fmt.Println()
@@ -226,6 +232,10 @@ func RenderHTML(res *engine.Result, version string) []byte {
 		field(&b, "What it means", f.WhatItMeans)
 		field(&b, "Evidence", f.Evidence)
 		field(&b, "How to fix", f.Remediation)
+		if strings.TrimSpace(f.Repro) != "" {
+			b.WriteString(`<div class="field"><span class="flabel">How to reproduce (cross-check by hand)</span><pre class="repro">` +
+				esc(f.Repro) + `</pre></div>`)
+		}
 		b.WriteString(`<p class="ref">` + esc(f.Reference) + `</p>`)
 		b.WriteString(`</section>`)
 	}
@@ -301,6 +311,7 @@ section{max-width:900px;margin:16px auto}
 .field{margin:10px 0}
 .flabel{display:block;text-transform:uppercase;font-size:11px;letter-spacing:.6px;color:var(--accent);font-weight:700;margin-bottom:2px}
 .field p{margin:0}
+.repro{white-space:pre-wrap;word-break:break-word;background:#0b0d12;border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:#c9cde0}
 .ref{color:var(--muted);font-size:12px;margin-top:12px}
 .cov{width:100%;border-collapse:collapse}
 .cov th,.cov td{text-align:left;border-bottom:1px solid var(--line);padding:6px 8px;font-size:14px}

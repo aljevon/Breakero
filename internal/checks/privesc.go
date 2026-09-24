@@ -101,6 +101,9 @@ func (c *PrivEscCheck) Run(ctx *Context) ([]finding.Finding, error) {
 					roleLabel(r), r.Level, evidenceForResponse(resp), sim*100,
 					roleLabel(top), top.Level)).
 				WithConfidence("likely").
+				WithRepro(repro(method, u, map[string]string{"Cookie": "<session for " + roleLabel(r) + ">"},
+					"Log in as "+roleLabel(r)+" (a lower-privileged account) and open the URL. "+
+						"If the admin-only feature works, the role check is missing on the server.")).
 				WithRemediation("Enforce role checks on the server for this action, not just in the UI. "+
 					"Use a deny-by-default authorization model and verify the caller's role against the "+
 					"required privilege inside the handler (or shared middleware) on every request."))
