@@ -32,7 +32,7 @@ The idea was to make something a beginner can actually run without a wiki open i
 
 Double-click the download and Breakero opens in its own window: no tabs, no address bar, just the app. Type a URL, tick the box that says you're allowed to test it, hit Scan. Results show up as you go, each one with a plain explanation and how to fix it. No install, no terminal, no digging through folders. Works this way on Windows, macOS and Linux.
 
-Under the hood it runs a tiny local server and shows the UI in a dedicated app window using the browser engine already on your machine (Edge ships with Windows). If it can't find one it opens your default browser instead, so it always works.
+On Windows it's a real native desktop window: its own process and taskbar entry, drawn with the WebView2 runtime that ships with Windows 10 and 11. No browser, no chrome around it. On macOS and Linux it opens a dedicated app-mode window using Chrome, Chromium, Edge or Brave. If none of that is available it falls back to your default browser, so it always opens one way or another. Under the hood it's a tiny local server that only your own machine can reach.
 
 <div align="center">
   <img src="assets/app.png" alt="The Breakero app" width="820">

@@ -66,12 +66,14 @@ func New(version string) *Server {
 	}
 }
 
-// Run starts the server, optionally opens the browser, and blocks until the
-// context is cancelled, the browser tab goes away, or the user quits.
-func (s *Server) Run(ctx context.Context, open bool) (string, error) {
+// Start binds the local server and begins serving in the background. It returns
+// the URL to open and a wait function that blocks until the server stops (the
+// window closed, the watchdog fired, or the context was cancelled). The caller
+// then opens either a native window or a browser at the URL.
+func (s *Server) Start(ctx context.Context) (string, func(), error) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	addr := ln.Addr().String()
 	openURL := fmt.Sprintf("http://%s/?t=%s", addr, s.token)
@@ -87,25 +89,25 @@ func (s *Server) Run(ctx context.Context, open bool) (string, error) {
 		_ = srv.Shutdown(shutCtx)
 	}()
 
-	// Watchdog: if the browser tab stops sending keepalive pings (it was
-	// closed), shut the app down so the process does not linger.
+	// Watchdog: if the app stops sending keepalive pings (its window was
+	// closed), shut down so the process does not linger.
 	go s.watchdog(ctx, cancel)
 
-	fmt.Fprintln(os.Stderr, "  Breakero app running at "+openURL)
-	fmt.Fprintln(os.Stderr, "  Close the window (or press Ctrl+C) to stop it.")
-	if open {
-		go openApp(openURL)
-	}
+	done := make(chan struct{})
+	go func() {
+		_ = srv.Serve(ln)
+		close(done)
+	}()
 
-	err = srv.Serve(ln)
-	if err == http.ErrServerClosed {
-		return openURL, nil
-	}
-	return openURL, err
+	return openURL, func() { <-done }, nil
 }
 
-// URL that the app is reachable at is only known after Run starts, so callers
-// that need it (to print a hint) get it from Run's return value.
+// Stop shuts the server down.
+func (s *Server) Stop() {
+	if s.shutdown != nil {
+		s.shutdown()
+	}
+}
 
 func (s *Server) watchdog(ctx context.Context, cancel context.CancelFunc) {
 	// Generous first window so a slow browser start does not kill the app.
@@ -364,7 +366,9 @@ func writeJSON(w http.ResponseWriter, v any) {
 // running from an isolated profile, so it looks and feels like a standalone app
 // rather than a browser tab. If no such browser is found, it falls back to
 // opening the default browser so the app still works.
-func openApp(url string) {
+// OpenApp shows the UI as its own window (a dedicated app-mode browser window),
+// falling back to the default browser when no Chromium browser is found.
+func OpenApp(url string) {
 	if launchAppWindow(url) {
 		return
 	}

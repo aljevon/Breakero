@@ -4,6 +4,16 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-24
+
+### Added
+- A true native desktop window on Windows, drawn with the WebView2 runtime
+  (built in to Windows 10/11). Breakero is now its own process with its own
+  window and taskbar entry, no browser involved. If the WebView2 runtime is
+  missing it falls back to the app-mode window, and then to the default browser.
+  Uses a pure-Go WebView2 binding, so the whole thing is still one exe with no C
+  toolchain needed.
+
 ## [1.1.1] - 2026-09-24
 
 ### Changed
@@ -50,6 +60,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.2.0]: https://github.com/aljevon/Breakero/releases/tag/v1.2.0
 [1.1.1]: https://github.com/aljevon/Breakero/releases/tag/v1.1.1
 [1.1.0]: https://github.com/aljevon/Breakero/releases/tag/v1.1.0
 [1.0.0]: https://github.com/aljevon/Breakero/releases/tag/v1.0.0

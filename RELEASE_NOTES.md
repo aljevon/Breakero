@@ -1,12 +1,12 @@
-## Breakero v1.1.1
+## Breakero v1.2.0
 
-Small but nice: the app now opens in its **own window**. No tabs, no address bar, no browser chrome around it. Just Breakero.
+Windows now gets a full native desktop app. Double-click `breakero-windows-amd64.exe` and it opens as its own window, its own process, its own taskbar entry. No browser, nothing wrapped around it. Just Breakero.
 
-Before, it opened in a browser tab and you saw a localhost address, which felt like a website. Now double-clicking the exe gives you a proper standalone app window that looks like the tool it is.
+It's drawn with WebView2, the engine that already comes with Windows 10 and 11, so there's nothing extra to install. If for some reason the WebView2 runtime isn't there, it quietly falls back to an app-mode window, and then to your default browser, so it always opens.
 
-How it works: Breakero uses the Chromium engine that's already on your machine in "app mode" (Edge comes with Windows 10 and 11, so there's nothing to install). On macOS and Linux it uses Chrome, Chromium or Brave if you have one. If it can't find any of them, it falls back to opening your default browser, so it still works no matter what.
+The nice part: it's still a single exe with no C toolchain or extra DLLs to ship. macOS and Linux keep the dedicated app-mode window (Chrome, Chromium, Edge or Brave).
 
-Everything else is the same as v1.1.0: type a URL, confirm you're authorized, scan, watch findings come in live, download an HTML or JSON report. Same engine and safety rails as the command line.
+Everything else is the same: type a URL, confirm you're authorized, scan, watch findings stream in, pull down an HTML or JSON report. Same engine and safety rails as the command line.
 
 ### What's in the download
 
