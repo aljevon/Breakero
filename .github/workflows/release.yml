@@ -65,26 +65,6 @@ jobs:
       - name: Build binaries
         run: make release
 
-      - name: Package archives, installer and checksums
-        run: |
-          set -eu
-          VERSION="${RELEASE_TAG}"
-          cd dist
-          # Per-platform archives that bundle the binary with docs.
-          for f in breakero-*; do
-            base="${f%.exe}"
-            cp ../README.md ../LICENSE ../AUTHORIZATION.md .
-            if [ "${f%.exe}" != "$f" ]; then
-              zip -q "${base}.zip" "$f" README.md LICENSE AUTHORIZATION.md
-            else
-              tar -czf "${base}.tar.gz" "$f" README.md LICENSE AUTHORIZATION.md
-            fi
-          done
-          rm -f README.md LICENSE AUTHORIZATION.md
-          # Checksums for everything.
-          sha256sum breakero-* > checksums.txt
-          echo "Release contents:"; ls -lh
-
       - name: Publish to GitHub Releases
         env:
           GH_TOKEN: ${{ github.token }}
@@ -107,8 +87,10 @@ jobs:
           else
             NOTES_ARG="--generate-notes"
           fi
+          # Ship exactly three files so the download page stays simple:
+          # Windows, Linux and macOS, 64-bit.
           gh release create "$RELEASE_TAG" \
-            breakero-* checksums.txt \
+            breakero-windows-amd64.exe breakero-linux-amd64 breakero-darwin-amd64 \
             --title "Breakero $RELEASE_TAG" \
             --target "$GITHUB_SHA" \
             $NOTES_ARG

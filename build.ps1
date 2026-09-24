@@ -29,11 +29,8 @@ function Build($goos, $goarch, $out) {
 }
 
 Build "windows" "amd64" "$Binary-windows-amd64.exe"
-Build "windows" "arm64" "$Binary-windows-arm64.exe"
 Build "linux"   "amd64" "$Binary-linux-amd64"
-Build "linux"   "arm64" "$Binary-linux-arm64"
 Build "darwin"  "amd64" "$Binary-darwin-amd64"
-Build "darwin"  "arm64" "$Binary-darwin-arm64"
 
 # Reset env vars to build for the local machine afterwards.
 Remove-Item Env:\GOOS, Env:\GOARCH, Env:\CGO_ENABLED -ErrorAction SilentlyContinue

@@ -41,16 +41,12 @@ clean:
 GOVERSIONINFO := go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.7.0
 icons:
 	$(GOVERSIONINFO) -icon assets/breakero.ico -64      -o cmd/breakero/resource_windows_amd64.syso cmd/breakero/versioninfo.json
-	$(GOVERSIONINFO) -icon assets/breakero.ico -arm -64 -o cmd/breakero/resource_windows_arm64.syso cmd/breakero/versioninfo.json
 
 # Cross-compile static, dependency-free binaries for every supported platform.
 release: clean
 	@mkdir -p $(DIST)
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(BUILDFLAGS) -o $(DIST)/$(BINARY)-windows-amd64.exe $(PKG)
-	CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build $(BUILDFLAGS) -o $(DIST)/$(BINARY)-windows-arm64.exe $(PKG)
 	CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build $(BUILDFLAGS) -o $(DIST)/$(BINARY)-linux-amd64      $(PKG)
-	CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build $(BUILDFLAGS) -o $(DIST)/$(BINARY)-linux-arm64      $(PKG)
 	CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build $(BUILDFLAGS) -o $(DIST)/$(BINARY)-darwin-amd64     $(PKG)
-	CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build $(BUILDFLAGS) -o $(DIST)/$(BINARY)-darwin-arm64     $(PKG)
 	@echo "Built binaries in $(DIST):"
 	@ls -lh $(DIST)

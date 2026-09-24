@@ -22,11 +22,8 @@ build() {
 }
 
 build windows amd64 "${BINARY}-windows-amd64.exe"
-build windows arm64 "${BINARY}-windows-arm64.exe"
 build linux   amd64 "${BINARY}-linux-amd64"
-build linux   arm64 "${BINARY}-linux-arm64"
 build darwin  amd64 "${BINARY}-darwin-amd64"
-build darwin  arm64 "${BINARY}-darwin-arm64"
 
 echo
 echo "Done. Binaries in ./$DIST:"

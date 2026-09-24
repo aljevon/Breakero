@@ -21,6 +21,9 @@ Notable changes land here. Format loosely follows
   instead of a white one.
 - Brighter, quicker background animation: a livelier scan sweep, a shimmering
   accent rule, and a gently pulsing bolt in the logo.
+- Release downloads trimmed to three files (Windows, Linux and macOS, 64-bit)
+  so the download page is not confusing. No more arm64 builds, archives or
+  checksums.
 
 ## [1.3.1] - 2026-09-24
 

@@ -18,9 +18,12 @@ On Windows the window's title bar is dark now and matches the app, instead of th
 
 The background scan sweep is brighter and quicker, the accent line shimmers, and the bolt in the logo gives a gentle pulse.
 
-### What's in the download
+### Downloads
 
-- Binaries for Windows, macOS and Linux (amd64 and arm64), plus zipped and tarred versions.
-- `checksums.txt` to verify what you grabbed.
+Three files, one for each system, to keep it simple:
 
-Grab a binary below and run it. Please only use it on things you're allowed to test. See AUTHORIZATION.md.
+- `breakero-windows-amd64.exe` for Windows (64-bit)
+- `breakero-linux-amd64` for Linux (64-bit)
+- `breakero-darwin-amd64` for macOS (64-bit; runs on Apple Silicon through Rosetta)
+
+Grab the one for your system and run it. Please only use it on things you're allowed to test. See AUTHORIZATION.md.

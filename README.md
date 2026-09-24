@@ -89,12 +89,11 @@ Pick the file for your machine on the [**Releases**](../../releases) page:
 
 | System | File |
 |---|---|
-| Windows 64-bit | `breakero-windows-amd64.exe` |
-| Windows ARM | `breakero-windows-arm64.exe` |
-| Linux 64-bit | `breakero-linux-amd64` |
-| Linux ARM64 | `breakero-linux-arm64` |
-| macOS Intel | `breakero-darwin-amd64` |
-| macOS Apple Silicon | `breakero-darwin-arm64` |
+| Windows (64-bit) | `breakero-windows-amd64.exe` |
+| Linux (64-bit) | `breakero-linux-amd64` |
+| macOS (64-bit) | `breakero-darwin-amd64` |
+
+Three files, one per system. On an Apple Silicon Mac (M1/M2/M3) the macOS build runs through Rosetta; macOS installs it the first time you need it.
 
 Windows, from PowerShell in your downloads folder:
 
