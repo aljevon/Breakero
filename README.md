@@ -30,7 +30,9 @@ The idea was to make something a beginner can actually run without a wiki open i
 
 ## 🖥 The app
 
-Double-click the download and Breakero opens as an app. Type a URL, tick the box that says you're allowed to test it, hit Scan. Results show up as you go, each one with a plain explanation and how to fix it. No install, no terminal, no digging through folders. It works this way on Windows, macOS and Linux (it runs a tiny local server and opens your browser at it).
+Double-click the download and Breakero opens in its own window: no tabs, no address bar, just the app. Type a URL, tick the box that says you're allowed to test it, hit Scan. Results show up as you go, each one with a plain explanation and how to fix it. No install, no terminal, no digging through folders. Works this way on Windows, macOS and Linux.
+
+Under the hood it runs a tiny local server and shows the UI in a dedicated app window using the browser engine already on your machine (Edge ships with Windows). If it can't find one it opens your default browser instead, so it always works.
 
 <div align="center">
   <img src="assets/app.png" alt="The Breakero app" width="820">

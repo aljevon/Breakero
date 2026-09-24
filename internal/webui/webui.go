@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -91,9 +92,9 @@ func (s *Server) Run(ctx context.Context, open bool) (string, error) {
 	go s.watchdog(ctx, cancel)
 
 	fmt.Fprintln(os.Stderr, "  Breakero app running at "+openURL)
-	fmt.Fprintln(os.Stderr, "  Close the browser tab (or press Ctrl+C) to stop it.")
+	fmt.Fprintln(os.Stderr, "  Close the window (or press Ctrl+C) to stop it.")
 	if open {
-		go openBrowser(openURL)
+		go openApp(openURL)
 	}
 
 	err = srv.Serve(ln)
@@ -357,8 +358,87 @@ func writeJSON(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// openBrowser opens the default browser at url on any desktop OS.
-func openBrowser(url string) {
+// openApp shows the UI as its own window. When a Chromium-based browser is
+// available (Edge ships with Windows 10/11, so this is the normal case), it is
+// launched in "app mode": a dedicated window with no tabs and no address bar,
+// running from an isolated profile, so it looks and feels like a standalone app
+// rather than a browser tab. If no such browser is found, it falls back to
+// opening the default browser so the app still works.
+func openApp(url string) {
+	if launchAppWindow(url) {
+		return
+	}
+	openInDefaultBrowser(url)
+}
+
+func launchAppWindow(url string) bool {
+	bin := findChromium()
+	if bin == "" {
+		return false
+	}
+	profile := filepath.Join(os.TempDir(), "breakero-app")
+	args := []string{
+		"--app=" + url,
+		"--user-data-dir=" + profile,
+		"--window-size=1060,800",
+		"--no-first-run",
+		"--no-default-browser-check",
+	}
+	if runtime.GOOS == "linux" {
+		args = append(args, "--class=Breakero")
+	}
+	return exec.Command(bin, args...).Start() == nil
+}
+
+// findChromium locates a Chromium-based browser to host the app window.
+func findChromium() string {
+	var names []string
+	switch runtime.GOOS {
+	case "windows":
+		names = []string{"msedge", "chrome", "brave"}
+	case "linux":
+		names = []string{"google-chrome", "google-chrome-stable", "chromium",
+			"chromium-browser", "microsoft-edge", "brave-browser"}
+	}
+	for _, n := range names {
+		if p, err := exec.LookPath(n); err == nil {
+			return p
+		}
+	}
+	var candidates []string
+	switch runtime.GOOS {
+	case "windows":
+		pf := os.Getenv("ProgramFiles")
+		pf86 := os.Getenv("ProgramFiles(x86)")
+		local := os.Getenv("LOCALAPPDATA")
+		candidates = []string{
+			filepath.Join(pf86, `Microsoft\Edge\Application\msedge.exe`),
+			filepath.Join(pf, `Microsoft\Edge\Application\msedge.exe`),
+			filepath.Join(pf, `Google\Chrome\Application\chrome.exe`),
+			filepath.Join(pf86, `Google\Chrome\Application\chrome.exe`),
+			filepath.Join(local, `Google\Chrome\Application\chrome.exe`),
+			filepath.Join(local, `Microsoft\Edge\Application\msedge.exe`),
+		}
+	case "darwin":
+		candidates = []string{
+			"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+			"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+			"/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+			"/Applications/Chromium.app/Contents/MacOS/Chromium",
+		}
+	}
+	for _, c := range candidates {
+		if c == "" {
+			continue
+		}
+		if _, err := os.Stat(c); err == nil {
+			return c
+		}
+	}
+	return ""
+}
+
+func openInDefaultBrowser(url string) {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":

@@ -4,6 +4,14 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-09-24
+
+### Changed
+- The app now opens in its own dedicated window (no tabs, no address bar)
+  instead of a browser tab. It uses the Chromium engine already on the machine
+  in "app mode" (Edge on Windows, Chrome/Chromium/Brave elsewhere) and falls
+  back to the default browser when none is found.
+
 ## [1.1.0] - 2026-09-23
 
 ### Added
@@ -42,5 +50,6 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.1.1]: https://github.com/aljevon/Breakero/releases/tag/v1.1.1
 [1.1.0]: https://github.com/aljevon/Breakero/releases/tag/v1.1.0
 [1.0.0]: https://github.com/aljevon/Breakero/releases/tag/v1.0.0
