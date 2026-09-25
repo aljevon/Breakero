@@ -4,6 +4,19 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-09-25
+
+### Added
+- A live progress line while a scan runs: percent complete, an estimate of how
+  much time is left, and elapsed time, so you are not left guessing how far
+  along it is.
+- A process panel that shows the scan as it happens, like a terminal: each
+  check as it starts and finishes, findings as they land, and the calibration
+  step at the top. Faint and monospace so it reads as a log, not a wall of text.
+- A small "flappy shield" mini-game to pass the time on a long scan. It slides
+  in below the progress line when you ask for it and closes with the × in its
+  corner; click or press space to flap. Purely optional and never in the way.
+
 ## [1.4.1] - 2026-09-24
 
 ### Fixed
@@ -139,6 +152,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.5.0]: https://github.com/aljevon/Breakero/releases/tag/v1.5.0
 [1.4.1]: https://github.com/aljevon/Breakero/releases/tag/v1.4.1
 [1.4.0]: https://github.com/aljevon/Breakero/releases/tag/v1.4.0
 [1.3.2]: https://github.com/aljevon/Breakero/releases/tag/v1.3.2

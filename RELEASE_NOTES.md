@@ -1,18 +1,23 @@
-## Breakero v1.4.1
+## Breakero v1.5.0
 
-### Report download fixed for good
+### See the scan happen
 
-Saving a report kept failing ("could not save the report" / "network issue") because the browser was being asked to download a file from the local server, and some browsers refuse http downloads. Now the report is built inside the app from the results already on screen and saved straight to a file, with no request to the server at all. Nothing to fail.
+A scan used to be a spinner and a wait. Now there is a live progress line under
+the checks: how far along it is as a percent, a rough estimate of the time left,
+and how long it has been running.
 
-### Verify-before-you-trust note and references
+Below that sits a process panel that reads like a terminal. It prints each check
+as it starts and finishes, findings as they come in, and the calibration step at
+the top. It is faint and monospace on purpose, so it looks like a log you can
+glance at rather than something you have to read.
 
-The bottom of the app (and the HTML report) now spells out that these results are automated leads, not conclusions: any finding can be a false positive, a clean scan is not proof of security, and you should confirm each one by hand and dig deeper before reporting. Alongside it is a set of references to read up on the attacks:
+### A game while you wait
 
-- OWASP Top 10 2025 A01, PortSwigger access control and IDOR, OWASP Web Security Testing Guide, CWE-284, CWE-639.
-
-### Small touch
-
-A faint github.com/aljevon line sits at the top of the app window.
+Long scans get boring. There is now a small "flappy shield" mini-game you can
+open from the "play a game while you wait" button. It slides in below the
+progress line, you click or press space to flap the shield through the gaps, and
+it keeps your best score. Close it any time with the × in its corner. It is
+entirely optional and does not touch the scan.
 
 ### Downloads
 

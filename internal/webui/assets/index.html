@@ -105,8 +105,35 @@ details.adv[open] summary::before{content:"[-] "}
 .prog{height:2px;background:#08080a;margin-top:14px;overflow:hidden;display:none}
 .prog.on{display:block}
 .prog>i{display:block;height:100%;width:0;background:var(--acc);transition:width .25s linear}
+.progline{display:none;align-items:center;gap:8px;margin-top:8px;font-size:11.5px;color:var(--muted)}
+.progline.on{display:flex}
+.progline #pct{color:var(--acc);font-weight:700;min-width:34px}
+.progline .dot{color:var(--dim)}
+.progline .mini{margin-left:auto;background:transparent;border:1px solid var(--line2);color:var(--muted);border-radius:var(--r);
+  padding:5px 10px;font:11px var(--mono);cursor:pointer}
+.progline .mini:hover{border-color:var(--acc);color:var(--acc)}
 .status{font-size:12px;color:var(--muted);margin-top:9px;min-height:16px}
 .status .live{color:var(--acc)}
+
+/* process log terminal, semi-transparent */
+.term-panel{background:rgba(255,255,255,.015)}
+.term{margin:0;padding:12px 14px;max-height:190px;overflow:auto;font:12px var(--mono);line-height:1.5;
+  color:#b9bccc;white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.25)}
+.term .t{color:var(--dim)}
+.term .a{color:var(--acc)}
+.term .g{color:#4ea1a1}
+.term .crit,.term .high{color:var(--acc)}
+.term .med{color:#cfcfd4}.term .low,.term .info{color:var(--dim)}
+#termMeta{color:var(--dim);text-transform:none;letter-spacing:0}
+
+/* mini game */
+.game-panel .h{display:flex;align-items:center}
+.gx{margin-left:auto;background:transparent;border:1px solid var(--line2);color:var(--muted);border-radius:3px;
+  width:22px;height:20px;line-height:1;cursor:pointer;font-size:14px}
+.gx:hover{border-color:var(--acc);color:var(--acc)}
+.gpad{padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+#gcanvas{width:100%;max-width:520px;height:auto;background:#08080a;border:1px solid var(--line2);border-radius:var(--r);cursor:pointer;touch-action:manipulation}
+.ghint{color:var(--dim);font-size:11px}
 .err{border:1px solid var(--acc);color:var(--acc);border-radius:var(--r);padding:10px 12px;margin-top:12px;font-size:12.5px;display:none}
 .err.on{display:block}
 
@@ -245,10 +272,29 @@ details.adv[open] summary::before{content:"[-] "}
       </details>
 
       <div class="prog" id="prog"><i id="bar"></i></div>
+      <div class="progline" id="progline">
+        <span id="pct">0%</span><span class="dot">·</span><span id="eta">estimating…</span><span class="dot">·</span><span id="elapsed">0s</span>
+        <button class="mini" id="playBtn" data-tip="<b>bored?</b> play a quick game while the scan runs. close it any time.">play a game while you wait</button>
+      </div>
       <div class="status" id="status"></div>
       <div class="err" id="err"></div>
     </div>
   </div>
+
+  <!-- live process log (terminal) -->
+  <section class="panel term-panel" id="termPanel" style="display:none">
+    <div class="h">process <span id="termMeta"></span></div>
+    <pre class="term" id="term"></pre>
+  </section>
+
+  <!-- mini game -->
+  <section class="panel game-panel" id="gamePanel" style="display:none">
+    <div class="h">flappy shield <button class="gx" id="gameClose" title="close">×</button></div>
+    <div class="gpad">
+      <canvas id="gcanvas" width="520" height="240"></canvas>
+      <div class="ghint" id="ghint">click the board or press space to flap</div>
+    </div>
+  </section>
 
   <!-- results -->
   <div class="results" id="results">
@@ -315,6 +361,27 @@ function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;'
 function setState(s){$('#statechip').textContent=s;}
 function setStatus(html){$('#status').innerHTML=html;}
 
+/* progress timing + process log */
+let scanStart=0, lastCheckAt=0, tickTimer=null, curTotal=1, curDone=0;
+function fmtT(ms){const s=Math.max(0,Math.round(ms/1000)); return s<60?s+'s':Math.floor(s/60)+'m'+String(s%60).padStart(2,'0')+'s';}
+function logln(cls,text){const el=$('#term'); if(!el)return; const t=fmtT(Date.now()-scanStart);
+  el.innerHTML+='<span class="t">['+t+']</span> <span class="'+(cls||'')+'">'+text+'</span>\n'; el.scrollTop=el.scrollHeight;}
+function tick(){
+  const el=Date.now()-scanStart; $('#elapsed').textContent=fmtT(el);
+  // smooth: base on checks done, then creep within the current check by time so
+  // the bar keeps moving instead of sitting on a whole number.
+  const avg = curDone>0 ? el/curDone : 3200;
+  const partial = curDone<curTotal ? Math.min(0.9,(Date.now()-lastCheckAt)/avg)/curTotal : 0;
+  let frac = Math.min(0.985, (curTotal?curDone/curTotal:0) + partial);
+  if(!running && curDone>=curTotal) frac=1;
+  $('#pct').textContent=Math.round(frac*100)+'%';
+  $('#bar').style.width=(4+frac*94)+'%';
+  if(frac>=1){$('#eta').textContent='done';}
+  else if(curDone===0 && el<2500){$('#eta').textContent='estimating…';}
+  else{$('#eta').textContent='~'+fmtT(el*(1-frac)/frac)+' left';}
+  $('#termMeta').textContent='· '+curDone+'/'+curTotal+' checks · '+findings.length+' findings';
+}
+
 /* references in the footer */
 document.getElementById('reflist').innerHTML =
   REFS.map(r=>`<a href="${r[1]}" target="_blank" rel="noopener">${esc(r[0])}</a>`).join('');
@@ -352,6 +419,13 @@ async function runScan(){
   $('#scan').textContent='stop'; $('#scan').classList.remove('go'); $('#scan').classList.add('stop');
   $('#prog').classList.add('on'); $('#bar').style.width='5%'; setState('scanning'); setStatus('starting…');
 
+  // progress readout + process log
+  scanStart=Date.now(); lastCheckAt=Date.now(); curTotal=1; curDone=0;
+  $('#progline').classList.add('on'); $('#pct').textContent='0%'; $('#eta').textContent='estimating…'; $('#elapsed').textContent='0s';
+  $('#termPanel').style.display='block'; $('#term').innerHTML='';
+  logln('a','$ breakero scan '+esc($('#url').value.trim()));
+  clearInterval(tickTimer); tickTimer=setInterval(tick,500);
+
   let total=1,done=0; controller=new AbortController();
   const body=JSON.stringify({url:$('#url').value.trim(),authorized:$('#authz').checked,
     rate:parseFloat($('#rate').value)||12,max_requests:parseInt($('#maxreq').value)||1500,
@@ -364,19 +438,25 @@ async function runScan(){
       buf+=dec.decode(value,{stream:true}); let nl;
       while((nl=buf.indexOf('\n'))>=0){const line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1); if(!line)continue;
         const ev=JSON.parse(line);
-        if(ev.type==='start'){total=ev.total||1; meta.scope=ev.scope||[];}
-        if(ev.type==='check'){done++; $('#bar').style.width=Math.min(96,5+done/total*90)+'%';
-          setStatus('running <span class="live">'+esc(ev.id)+'</span> · '+done+'/'+total+' checks · '+findings.length+' found so far'); addCov(ev);}
-        if(ev.type==='finding'){findings.push(ev.finding); haveResult=true; renderFindings(); enableDl();}
-        if(ev.type==='error'){showErr(ev.message);}
+        if(ev.type==='start'){total=ev.total||1; meta.scope=ev.scope||[]; curTotal=total;
+          logln('','calibrating target · '+total+' checks queued'+(ev.catchAll?' · catch-all/soft-404 detected':''));}
+        if(ev.type==='check'){done++; curDone=done; lastCheckAt=Date.now();
+          setStatus('running <span class="live">'+esc(ev.id)+'</span> · '+done+'/'+total+' checks · '+findings.length+' found so far');
+          logln('g','[+] '+esc(ev.id)+' → '+(ev.err?('error: '+esc(ev.err)):(ev.count+' finding'+(ev.count===1?'':'s')))); addCov(ev); tick();}
+        if(ev.type==='finding'){findings.push(ev.finding); haveResult=true; renderFindings(); enableDl();
+          const sc=(SEV[ev.finding.severity]||['INFO','info']); logln(sc[1],'    [!] '+sc[0]+' '+esc(ev.finding.title));}
+        if(ev.type==='error'){showErr(ev.message); logln('high','[x] '+esc(ev.message));}
         if(ev.type==='done'){renderSummary(ev); haveResult=true; enableDl();
-          meta.summary=ev.summary||{}; meta.requests=ev.requests||0; meta.durationMs=ev.durationMs||0;
-          setStatus('done · '+ev.total+' finding'+(ev.total===1?'':'s')+' · '+ev.requests+' requests');}
+          meta.summary=ev.summary||{}; meta.requests=ev.requests||0; meta.durationMs=ev.durationMs||0; curDone=curTotal;
+          setStatus('done · '+ev.total+' finding'+(ev.total===1?'':'s')+' · '+ev.requests+' requests');
+          logln('a','[done] '+ev.total+' findings · '+ev.requests+' requests · '+(ev.durationMs/1000).toFixed(1)+'s');}
       }
     }
   }catch(e){ if(e.name==='AbortError'){stopped=true;} else {showErr('scan failed: '+e.message);} }
 
   $('#bar').style.width='100%'; setTimeout(()=>$('#prog').classList.remove('on'),400);
+  clearInterval(tickTimer); $('#pct').textContent=stopped?'stopped':'100%'; $('#eta').textContent='done'; tick();
+  if(stopped)logln('med','[stopped] '+findings.length+' finding(s) so far');
   $('#scan').textContent='scan'; $('#scan').classList.add('go'); $('#scan').classList.remove('stop');
   running=false; setState(stopped?'stopped':'idle'); if(stopped)setStatus('stopped · '+findings.length+' finding(s) so far'); refresh();
 }
@@ -501,6 +581,63 @@ const REPORT_CSS=`:root{--bg:#0b0b0c;--card:#0f0f11;--line:#26262b;--ink:#e8e8ea
 footer{color:var(--muted);font-size:11px;text-align:center;margin-top:22px}a{color:var(--acc)}`;
 $('#dlHtml').addEventListener('click',()=>download('html'));
 $('#dlJson').addEventListener('click',()=>download('json'));
+
+/* ---- mini game: flappy shield ---- */
+const G={raf:0,open:false,st:'ready',x:100,y:120,vy:0,pipes:[],score:0,best:0,last:0,spawn:0};
+const gc=$('#gcanvas'), gx=gc.getContext('2d'), GW=gc.width, GH=gc.height;
+function gReset(){G.st='ready';G.x=100;G.y=GH/2;G.vy=0;G.pipes=[];G.score=0;G.spawn=0;}
+function gFlap(){ if(G.st==='ready'){G.st='play';G.vy=-6.0;} else if(G.st==='play'){G.vy=-6.0;} else {gReset();} }
+function gStep(ts){
+  if(!G.open)return; const dt=G.last?Math.min(48,ts-G.last):16; G.last=ts;
+  if(G.st==='play'){
+    G.vy+=0.42*dt/16; G.y+=G.vy*dt/16;
+    G.spawn-=dt; if(G.spawn<=0){G.spawn=1450; const gap=84, top=30+Math.random()*(GH-60-gap); G.pipes.push({x:GW+10,gap:top,scored:false});}
+    for(const p of G.pipes){p.x-=1.9*dt/16;}
+    G.pipes=G.pipes.filter(p=>p.x>-50);
+    for(const p of G.pipes){
+      if(!p.scored&&p.x+46<G.x){p.scored=true;G.score++;G.best=Math.max(G.best,G.score);}
+      const inX=G.x+10>p.x&&G.x-10<p.x+46;
+      if(inX&&(G.y-10<p.gap||G.y+10>p.gap+84)){G.st='over';}
+    }
+    if(G.y+10>=GH-14||G.y-10<=0){G.y=Math.min(G.y,GH-24);G.st='over';}
+  }
+  gDraw(); G.raf=requestAnimationFrame(gStep);
+}
+function gDraw(){
+  gx.clearRect(0,0,GW,GH); gx.fillStyle='#08080a'; gx.fillRect(0,0,GW,GH);
+  gx.strokeStyle='rgba(255,255,255,.04)'; for(let i=0;i<GW;i+=26){gx.beginPath();gx.moveTo(i,0);gx.lineTo(i,GH);gx.stroke();}
+  // ground
+  gx.strokeStyle='#26262b'; gx.beginPath(); gx.moveTo(0,GH-14); gx.lineTo(GW,GH-14); gx.stroke();
+  // pipes
+  gx.lineWidth=2;
+  for(const p of G.pipes){
+    gx.fillStyle='rgba(242,134,10,.10)'; gx.strokeStyle='#f2860a';
+    gx.fillRect(p.x,0,46,p.gap); gx.strokeRect(p.x,0,46,p.gap);
+    gx.fillRect(p.x,p.gap+84,46,GH-14-(p.gap+84)); gx.strokeRect(p.x,p.gap+84,46,GH-14-(p.gap+84));
+  }
+  // shield bird
+  gx.save(); gx.translate(G.x,G.y); const t=Math.max(-0.5,Math.min(0.7,G.vy/12)); gx.rotate(t);
+  gx.strokeStyle='#e8e8ea'; gx.lineWidth=2.4; gx.beginPath();
+  gx.moveTo(0,-11);gx.lineTo(10,-6);gx.lineTo(10,3);gx.quadraticCurveTo(10,10,0,13);gx.quadraticCurveTo(-10,10,-10,3);gx.lineTo(-10,-6);gx.closePath(); gx.stroke();
+  gx.strokeStyle='#f2860a'; gx.beginPath(); gx.moveTo(3,-8);gx.lineTo(-3,1);gx.lineTo(1,2);gx.lineTo(-2,10); gx.stroke();
+  gx.restore();
+  // score + prompts
+  gx.fillStyle='#e8e8ea'; gx.font='700 20px ui-monospace,Consolas,monospace'; gx.textAlign='left'; gx.fillText(String(G.score),14,30);
+  gx.fillStyle='#9a9aa2'; gx.font='12px ui-monospace,Consolas,monospace'; gx.textAlign='right'; gx.fillText('best '+G.best,GW-14,26);
+  gx.textAlign='center';
+  if(G.st==='ready'){gx.fillStyle='#f2860a'; gx.font='14px ui-monospace,Consolas,monospace'; gx.fillText('click or space to start',GW/2,GH/2);}
+  if(G.st==='over'){gx.fillStyle='#f2860a';gx.font='700 18px ui-monospace,Consolas,monospace';gx.fillText('game over',GW/2,GH/2-6);
+    gx.fillStyle='#9a9aa2';gx.font='12px ui-monospace,Consolas,monospace';gx.fillText('score '+G.score+' · click to retry',GW/2,GH/2+16);}
+}
+function gameOpen(){ $('#gamePanel').style.display='block'; G.open=true; gReset(); G.last=0; cancelAnimationFrame(G.raf); G.raf=requestAnimationFrame(gStep);
+  $('#gamePanel').scrollIntoView({behavior:'smooth',block:'nearest'}); }
+function gameClose(){ G.open=false; cancelAnimationFrame(G.raf); $('#gamePanel').style.display='none'; }
+$('#playBtn').addEventListener('click',gameOpen);
+$('#gameClose').addEventListener('click',gameClose);
+gc.addEventListener('mousedown',e=>{e.preventDefault();gFlap();});
+gc.addEventListener('touchstart',e=>{e.preventDefault();gFlap();},{passive:false});
+addEventListener('keydown',e=>{ if(!G.open)return; const a=document.activeElement;
+  if(e.code==='Space'&&!(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'))){e.preventDefault();gFlap();} });
 
 /* lifecycle */
 setInterval(()=>fetch('/api/ping',{headers:H}).catch(()=>{}),5000);
