@@ -4,6 +4,18 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-09-25
+
+### Fixed
+- The scan progress line now settles on "100% · done" when a scan finishes,
+  instead of briefly sticking at "99% · ~1s left". The final tick ran before the
+  running flag was cleared, so its 98.5% smoothing cap won.
+
+### Docs
+- Refreshed the README and all of its screenshots for the 1.9.x app: the live
+  progress and process panel, the roles & IDOR sliders, the upload test-image
+  generator, and the enterprise HTML/PDF report.
+
 ## [1.9.0] - 2026-09-25
 
 ### Added
@@ -226,6 +238,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.9.1]: https://github.com/aljevon/Breakero/releases/tag/v1.9.1
 [1.9.0]: https://github.com/aljevon/Breakero/releases/tag/v1.9.0
 [1.8.0]: https://github.com/aljevon/Breakero/releases/tag/v1.8.0
 [1.7.0]: https://github.com/aljevon/Breakero/releases/tag/v1.7.0

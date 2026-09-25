@@ -35,8 +35,10 @@ Double-click the download and Breakero opens in its own window: no tabs, no addr
 On Windows it's a real native desktop window: its own process and taskbar entry, drawn with the WebView2 runtime that ships with Windows 10 and 11. No browser, no chrome around it. On macOS and Linux it opens a dedicated app-mode window using Chrome, Chromium, Edge or Brave. If none of that is available it falls back to your default browser, so it always opens one way or another. Under the hood it's a tiny local server that only your own machine can reach.
 
 <div align="center">
-  <img src="assets/app.png" alt="The Breakero app" width="820">
+  <img src="assets/app.png" alt="The Breakero app" width="860">
 </div>
+
+While a scan runs you get a live progress readout (percent done, time left, elapsed) and a process panel that streams every check and finding as it happens, like a terminal. Long scan? There's a small flappy-shield mini-game you can open and close whenever you like. When it's done, the results come with three buttons: a full **HTML report**, a **PDF** (via the print dialog), and **JSON**.
 
 Prefer the command line? That still works too, same engine underneath. See [Quick start](#quick-start).
 
@@ -49,6 +51,8 @@ Prefer the command line? That still works too, same engine underneath. See [Quic
 - [Install](#install)
 - [Quick start](#quick-start)
 - [What it checks](#what-it-checks)
+- [Roles and IDOR, no config needed](#roles-and-idor-no-config-needed)
+- [Upload test images](#upload-test-images)
 - [Sample report](#sample-report)
 - [Config file](#config-file)
 - [Flags](#flags)
@@ -63,10 +67,12 @@ Prefer the command line? That still works too, same engine underneath. See [Quic
 ## What's good about it
 
 - **It's one file.** No Python, no Node, nothing to install first. Download it and go. Cold start is basically instant.
+- **No config file to find IDOR or role bugs.** A large built-in dictionary of role and permission values, object-id parameters and common REST id paths means IDOR and privilege checks work the moment you press Scan. Two sliders in the app tune how deep it goes.
 - **It explains itself.** Type `breakero -explain` and it talks you through every check in normal language. The HTML report opens with a short intro for people who are new to this.
 - **Hard to misuse.** There's a speed limit, a cap on total requests, a scope lock, and it stays read-only until you say otherwise. You won't knock a site over by accident.
-- **Reports you can hand to someone.** Color in the terminal, a single HTML file you can email, and JSON if you'd rather script around it.
+- **Reports you can hand to someone.** A professional, enterprise-style HTML report with a cover, an executive summary and a jump-to contents menu; the same thing as a **PDF**; color in the terminal; and JSON if you'd rather script around it.
 - **Cross-check by hand.** Every finding comes with a curl command (Windows, Linux, macOS) and a browser step, so you can reproduce it yourself before you report it.
+- **Test file uploads too.** Build a valid PNG or JPG of a chosen size, carrying a unique marker, to probe broken access control on image-upload features.
 - **Less noise.** Plenty of scanners scream about every path they guess. This one notices when a server answers "200 OK" to things that don't exist and quiets down.
 
 ## Staying out of trouble
@@ -167,12 +173,38 @@ Eleven modules, each one aimed at a real broken-access-control pattern from A01:
 
 Everything goes through one shared HTTP client, and that client is where scope, the speed limit and the request cap live. No module gets to skip them.
 
-## Sample report
+## Roles and IDOR, no config needed
 
-The HTML report is a single file with nothing external, so you can open it anywhere or drop it straight into a ticket. Every finding gets the plain-language write-up, the evidence, and the fix.
+IDOR and privilege problems used to need a hand-written config describing which role holds which login and which objects belong to whom. Now that knowledge is built in. Breakero ships with a large dictionary of role and permission values (admin, manager, editor, staff, moderator, superadmin and dozens more), common object-id parameters (`id`, `user_id`, `order_id`, `file`…) and REST id paths (`/api/users/{id}`, `/account/{id}`…). It guesses privilege on blocked pages and walks sequential ids on common API paths automatically, so you get real IDOR and role coverage from a pasted URL.
+
+Two elegant sliders in the app's Advanced panel tune it, no file to edit:
+
+- **role guesses** — how many role/permission values to try on each blocked page, from light to thorough.
+- **id enumeration depth** — how many neighbouring ids the automatic IDOR probe reads, from shallow to deep.
+- **auto-probe idor on common api paths** — on by default.
 
 <div align="center">
-  <img src="assets/report-sample.png" alt="Breakero HTML report" width="780">
+  <img src="assets/roles-idor.png" alt="The roles and IDOR sliders in the app" width="820">
+</div>
+
+The defaults are tuned so a beginner just presses Scan. A [config file](#config-file) is still there for the deeper case, where you want to test as specific logged-in accounts and compare them.
+
+## Upload test images
+
+Some access-control bugs live in the upload path: a stored image reachable with no session, guessable by id, or served to the wrong user. The app builds a real, valid PNG or JPG of about the size you pick (~200 KB, ~500 KB, ~1 MB or under 2 MB) with a unique tracking marker (a "canary") embedded in the file's metadata. Upload it through the target's own image field, then use the canary to see how the stored file is handled. Nothing is uploaded for you; it only writes a local file, so you stay in control of the request.
+
+<div align="center">
+  <img src="assets/upload-image.png" alt="The upload test image generator" width="820">
+</div>
+
+## Sample report
+
+The HTML report is a single self-contained file, laid out like a professional security-assessment document: a cover with an overall risk rating and a report reference, an executive summary, a risk overview, a navigable findings index, and detailed findings with evidence, business impact and a copy-ready reproduction step. A fixed **Contents** dropdown jumps to any section, so a long report is never a long scroll. Save it as HTML to email or drop into a ticket, or as **PDF** straight from the app.
+
+<div align="center">
+  <img src="assets/report-sample.png" alt="Breakero HTML report cover and executive summary" width="820">
+  <br><br>
+  <img src="assets/report-findings.png" alt="Breakero HTML report detailed findings" width="820">
 </div>
 
 ## Config file

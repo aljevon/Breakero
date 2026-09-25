@@ -570,11 +570,14 @@ async function runScan(){
     }
   }catch(e){ if(e.name==='AbortError'){stopped=true;} else {showErr('scan failed: '+e.message);} }
 
+  running=false;
   $('#bar').style.width='100%'; setTimeout(()=>$('#prog').classList.remove('on'),400);
-  clearInterval(tickTimer); $('#pct').textContent=stopped?'stopped':'100%'; $('#eta').textContent='done'; tick();
+  clearInterval(tickTimer);
+  if(stopped){ $('#pct').textContent='stopped'; $('#eta').textContent='stopped'; $('#elapsed').textContent=fmtT(Date.now()-scanStart); }
+  else { curDone=curTotal; tick(); } // running is now false, so tick() settles on 100% / done
   if(stopped)logln('med','[stopped] '+findings.length+' finding(s) so far');
   $('#scan').textContent='scan'; $('#scan').classList.add('go'); $('#scan').classList.remove('stop');
-  running=false; setState(stopped?'stopped':'idle'); if(stopped)setStatus('stopped · '+findings.length+' finding(s) so far'); refresh();
+  setState(stopped?'stopped':'idle'); if(stopped)setStatus('stopped · '+findings.length+' finding(s) so far'); refresh();
 }
 
 function enableDl(){ if(haveResult){$('#dlHtml').disabled=false; $('#dlJson').disabled=false; $('#dlPdf').disabled=false;} }
