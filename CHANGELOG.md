@@ -4,6 +4,23 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-09-25
+
+### Changed
+- The report you download from the app is now the same premium
+  security-assessment document the command line produces: a cover page with an
+  overall risk rating and a report reference, an executive summary, a risk
+  overview, a navigable findings index, detailed findings with a metadata grid,
+  test coverage, methodology and a verification note. It also carries the fixed
+  "Contents" dropdown, so a long report is one click from any section instead of
+  a scroll. Previously the in-app download used a much plainer layout.
+
+### Fixed
+- The report's severity counts and overall risk rating are now derived from the
+  findings themselves, so the summary always agrees with the detailed list.
+- A report downloaded mid-scan no longer shows a misleading "0.0s" duration; it
+  falls back to the live elapsed time until the scan's final total is in.
+
 ## [1.6.0] - 2026-09-25
 
 ### Added
@@ -172,6 +189,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.7.0]: https://github.com/aljevon/Breakero/releases/tag/v1.7.0
 [1.6.0]: https://github.com/aljevon/Breakero/releases/tag/v1.6.0
 [1.5.0]: https://github.com/aljevon/Breakero/releases/tag/v1.5.0
 [1.4.1]: https://github.com/aljevon/Breakero/releases/tag/v1.4.1

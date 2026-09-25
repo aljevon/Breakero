@@ -1,40 +1,32 @@
-## Breakero v1.6.0
+## Breakero v1.7.0
 
-### A report that looks like a real deliverable
+### The in-app report is now the premium one
 
-The HTML report has been rebuilt from the ground up to read like a professional
+The report you download from inside the app used to have a much plainer layout
+than the one the command line produced. Now they are the same premium
 security-assessment document, the kind you would hand to a client or an asset
 owner:
 
-- A cover page with the target, scope, assessment date and an overall risk
-  rating.
-- An executive summary that states the risk posture in plain language and shows
-  the count of findings at each severity.
-- A risk overview with a severity breakdown, and a findings index table you can
-  click straight into.
+- A cover page with the target, scope, assessment date, a report reference and
+  an overall risk rating.
+- An executive summary that states the risk posture in plain language, with a
+  count of findings at each severity.
+- A risk overview with a severity breakdown, and a findings index you can click
+  straight into.
 - Detailed findings, each with a clean metadata grid (endpoint, module,
   confidence, severity), evidence, business impact, recommended remediation and
   a copy-ready reproduction block.
 - Methodology and scope, a verification note, and references.
+- The fixed "Contents" dropdown at the top, so a long report with many findings
+  is one click from any section instead of a scroll.
 
-### Never scroll a long report again
+### More accurate
 
-A fixed "Contents" dropdown sits at the top of the report. It lists every
-section and every finding by its id and title, so no matter how many findings a
-scan produced, any part is one click away. Every detailed finding also has a
-"back to top" link.
-
-### The mini-game got a voice
-
-The flappy-shield game now has sound: small, playful blips for flapping,
-scoring and game over, built with the Web Audio API so there are no extra files
-and it works offline. A ♪ on/off toggle in the game's title bar turns it off
-whenever you like.
-
-### Easier to notice
-
-The "play a game while you wait" button is now a filled accent button with a
-gentle wiggle, so it stands out during a long scan.
+- The severity counts and the overall risk rating are now taken from the
+  findings themselves, so the summary always matches the detailed list.
+- A report saved in the middle of a scan no longer shows a misleading "0.0s"
+  duration; it shows the live elapsed time until the final total is ready. For
+  the complete picture, download after the scan finishes.
 
 ### Downloads
 
