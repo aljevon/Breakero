@@ -1,0 +1,52 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1280px;height:640px;overflow:hidden}
+:root{--bg:#0b0b0c;--acc:#f2860a;--ink:#e8e8ea;--muted:#9a9aa2;--dim:#5f5f66;--line:#26262b;
+  --mono:"DejaVu Sans Mono","Liberation Mono",ui-monospace,Menlo,Consolas,monospace}
+body{background:var(--bg);font-family:var(--mono);position:relative;color:var(--ink)}
+/* subtle amber glow + grid */
+.glow{position:absolute;inset:0;background:radial-gradient(90% 120% at 78% -20%,rgba(242,134,10,.16),transparent 55%)}
+.grid{position:absolute;inset:0;opacity:.5;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 1px,transparent 1px 44px),repeating-linear-gradient(0deg,rgba(255,255,255,.028) 0 1px,transparent 1px 44px)}
+.toprule{position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,var(--acc),rgba(242,134,10,.15))}
+.wrap{position:absolute;inset:0;display:flex;align-items:center;padding:0 78px}
+.left{flex:1;min-width:0}
+.eyebrow{color:var(--acc);font-size:19px;letter-spacing:6px;font-weight:700}
+.brand{font-size:132px;font-weight:800;color:var(--acc);letter-spacing:-2px;line-height:1;margin:20px 0 6px}
+.sub{font-size:33px;color:var(--ink);letter-spacing:1px}
+.desc{font-size:23px;color:var(--muted);margin-top:24px;line-height:1.5;max-width:640px}
+.desc b{color:var(--ink);font-weight:700}
+.chips{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);border-radius:7px;padding:11px 16px;font-size:18px;color:var(--muted)}
+.chip.hot{border-color:var(--acc);color:var(--acc)}
+.chip b{color:var(--ink);font-weight:700}
+.foot{position:absolute;left:78px;bottom:52px;display:flex;align-items:center;gap:12px;font-size:22px;color:var(--muted)}
+.foot .d{color:var(--acc);font-size:20px}
+.foot b{color:var(--ink)}
+.right{width:430px;display:flex;align-items:center;justify-content:center;position:relative}
+.shieldglow{position:absolute;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(242,134,10,.18),transparent 62%)}
+svg{position:relative;filter:drop-shadow(0 12px 40px rgba(0,0,0,.5))}
+</style></head><body>
+<div class="glow"></div><div class="grid"></div><div class="toprule"></div>
+<div class="wrap">
+  <div class="left">
+    <div class="eyebrow">OWASP TOP 10 2025 · A01</div>
+    <div class="brand">breakero</div>
+    <div class="sub">broken access control scanner</div>
+    <div class="desc">Find <b>IDOR</b>, <b>privilege escalation</b> and <b>forced browsing</b> straight from a pasted URL. No config to edit.</div>
+    <div class="chips">
+      <div class="chip hot"><b>IDOR &amp; roles</b> · no config</div>
+      <div class="chip">HTML · PDF · JSON reports</div>
+      <div class="chip">windows · macOS · linux</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="shieldglow"></div>
+    <svg width="360" height="360" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M128 42 L192 66 V126 C192 168 163 196 128 212 C93 196 64 168 64 126 V66 Z" fill="rgba(242,134,10,.05)" stroke="#e8e8ea" stroke-width="7" stroke-linejoin="round"/>
+      <circle cx="128" cy="118" r="17" fill="none" stroke="#e8e8ea" stroke-width="7"/>
+      <path d="M148 54 L110 118 L134 124 L98 196" fill="none" stroke="#f2860a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+</div>
+<div class="foot"><span class="d">◆</span> github.com/<b>aljevon</b> · authorized testing only</div>
+</body></html>
