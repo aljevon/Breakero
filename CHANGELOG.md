@@ -4,6 +4,22 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-09-25
+
+### Added
+- Save the report as PDF. A new "pdf" button opens the report in the print
+  dialog, where you choose "Save as PDF" (or "Microsoft Print to PDF"). The
+  report now carries a proper print stylesheet, so the PDF is a clean, legible
+  light-on-white document rather than the dark on-screen theme.
+- An upload test image generator for probing Broken Access Control on image
+  uploads. It builds a genuinely valid PNG or JPG of about the size you pick
+  (~200 KB, ~500 KB, ~1 MB, or under 2 MB) with a unique canary and benign
+  access-control probe notes embedded in the file's metadata. Upload it through
+  the target's own image field, then check whether the stored file is reachable
+  without a session, guessable by id (IDOR), served with its metadata intact, or
+  returned to the wrong user. Nothing is uploaded for you; it only writes a local
+  file, in keeping with the tool's "you drive the actual request by hand" design.
+
 ## [1.7.0] - 2026-09-25
 
 ### Changed
@@ -189,6 +205,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.8.0]: https://github.com/aljevon/Breakero/releases/tag/v1.8.0
 [1.7.0]: https://github.com/aljevon/Breakero/releases/tag/v1.7.0
 [1.6.0]: https://github.com/aljevon/Breakero/releases/tag/v1.6.0
 [1.5.0]: https://github.com/aljevon/Breakero/releases/tag/v1.5.0

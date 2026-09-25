@@ -160,6 +160,26 @@ details.adv[open] summary::before{content:"[-] "}
 .reflist a:hover{color:var(--acc);border-color:var(--acc)}
 .reflist a::before{content:"→ ";color:var(--acc)}
 
+/* upload test image generator */
+.h .hsub{color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400;margin-left:8px;font-size:10.5px}
+.genpanel .disc{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.genrow{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px}
+.genfield{display:flex;flex-direction:column;gap:6px}
+.genfield.grow{flex:1;min-width:180px}
+.glab{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden}
+.segb{background:#08080a;color:var(--muted);border:0;border-right:1px solid var(--line2);padding:8px 11px;font:11.5px var(--mono);cursor:pointer;white-space:nowrap}
+.segb:last-child{border-right:0}
+.segb:hover{color:var(--ink)}
+.segb.on{background:var(--acc);color:#0a0a0a;font-weight:700}
+.genout{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.genkv{display:flex;align-items:center;gap:10px;margin:0 0 8px;font-size:12.5px}
+.genkv .k{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);min-width:56px}
+.genkv code{background:#08080a;border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:12px;color:var(--ink);word-break:break-all}
+.genkv .mut{color:var(--muted)}
+.btn.xs{padding:4px 9px;font-size:11px;font-weight:600}
+.genhint{color:var(--dim);font-size:11.5px;margin:8px 0 0;line-height:1.6}
+
 /* results */
 .results{display:none}
 .results.on{display:block}
@@ -319,11 +339,51 @@ details.adv[open] summary::before{content:"[-] "}
       <span class="sp"></span>
       <span class="m" id="metrics"></span>
       <button class="btn sm" id="dlHtml" disabled data-tip="<b>html report</b> a single self-contained file with every finding and how to reproduce it.">html report</button>
+      <button class="btn sm" id="dlPdf" disabled data-tip="<b>pdf</b> opens the report in the print dialog. choose &quot;save as pdf&quot; (or microsoft print to pdf) as the printer.">pdf</button>
       <button class="btn sm" id="dlJson" disabled data-tip="<b>json</b> machine-readable results for scripting.">json</button>
     </div>
     <div class="flist" id="findings"></div>
     <div class="cov" id="coverage" style="display:none"></div>
   </div>
+
+  <!-- upload test image generator -->
+  <section class="panel genpanel">
+    <div class="h">upload test image <span class="hsub">broken access control on image uploads</span></div>
+    <div class="pad">
+      <p class="disc">build a real, valid image that carries a unique tracking marker (a "canary") plus common
+      access-control probe notes in its metadata. upload it through the target's own image field, then check whether
+      the stored file is reachable without a session, guessable by id (idor), served with its metadata intact, or
+      returned to the wrong user. only test uploads you are authorized to test.</p>
+      <div class="genrow">
+        <div class="genfield">
+          <label class="glab">format</label>
+          <div class="seg" id="imgFmt">
+            <button class="segb on" data-v="png">png</button>
+            <button class="segb" data-v="jpg">jpg</button>
+          </div>
+        </div>
+        <div class="genfield">
+          <label class="glab">target size</label>
+          <div class="seg" id="imgSize">
+            <button class="segb on" data-v="200">~200 kb</button>
+            <button class="segb" data-v="500">~500 kb</button>
+            <button class="segb" data-v="1024">~1 mb</button>
+            <button class="segb" data-v="1900">&lt;2 mb</button>
+          </div>
+        </div>
+        <div class="genfield grow">
+          <label class="glab">marker note (optional)</label>
+          <input id="imgNote" type="text" placeholder="e.g. ticket-4821 / tester initials" autocomplete="off" spellcheck="false">
+        </div>
+        <button class="btn go" id="genImg" data-tip="<b>build image</b> creates a valid image of about the chosen size with your canary embedded, and saves it. nothing is uploaded for you.">build image</button>
+      </div>
+      <div class="genout" id="genOut" style="display:none">
+        <div class="genkv"><span class="k">canary</span><code id="genCanary"></code><button class="btn xs" id="copyCanary" data-tip="copy the canary">copy</button></div>
+        <div class="genkv"><span class="k">file</span><span id="genFile" class="mut"></span></div>
+        <p class="genhint">next: upload this file via the target's form, then search responses/urls for the canary. try fetching the stored file with no session and by nearby ids to probe broken access control. see the html report's "how to reproduce" style for exact steps.</p>
+      </div>
+    </div>
+  </section>
 
   <section class="panel notepanel">
     <div class="h">verify before you trust</div>
@@ -426,7 +486,7 @@ async function runScan(){
   running=true; haveResult=false; findings=[]; coverage=[];
   meta={target:$('#url').value.trim(), scope:[], requests:0, durationMs:0, summary:{}, started:new Date().toISOString()};
   $('#err').classList.remove('on'); $('#findings').innerHTML=''; $('#coverage').style.display='none';
-  $('#dlHtml').disabled=true; $('#dlJson').disabled=true;
+  $('#dlHtml').disabled=true; $('#dlJson').disabled=true; $('#dlPdf').disabled=true;
   $('#results').classList.add('on'); renderSummary({});
   $('#scan').textContent='stop'; $('#scan').classList.remove('go'); $('#scan').classList.add('stop');
   $('#prog').classList.add('on'); $('#bar').style.width='5%'; setState('scanning'); setStatus('starting…');
@@ -473,7 +533,7 @@ async function runScan(){
   running=false; setState(stopped?'stopped':'idle'); if(stopped)setStatus('stopped · '+findings.length+' finding(s) so far'); refresh();
 }
 
-function enableDl(){ if(haveResult){$('#dlHtml').disabled=false; $('#dlJson').disabled=false;} }
+function enableDl(){ if(haveResult){$('#dlHtml').disabled=false; $('#dlJson').disabled=false; $('#dlPdf').disabled=false;} }
 
 function renderFindings(){
   const box=$('#findings');
@@ -732,9 +792,163 @@ footer{max-width:940px;margin:0 auto;padding:26px 20px 60px;color:var(--muted)}
 .totop{position:fixed;right:18px;bottom:18px;z-index:30;width:40px;height:40px;border-radius:50%;background:var(--acc);color:#0b0b0c;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.4)}
 .totop:hover{text-decoration:none;filter:brightness(1.1)}
 @media (max-width:640px){.cover-grid,.meta-grid{grid-template-columns:1fr}.statgrid{grid-template-columns:repeat(2,1fr)}.cover h1{font-size:30px}.menu-panel{width:78vw}.block-num{display:none}.ep{max-width:150px}}
-@media print{.mast,.totop{display:none}body{background:#fff;color:#111}.finding,.stat,.cg,.mg,.callout,.clean{background:#fff}a{color:#000}}`;
+@media print{
+ @page{margin:14mm}
+ .mast,.totop{display:none!important}
+ html,body{background:#fff!important;background-image:none!important}
+ body,.lead,.block p,.muted,.cg-v,.mg-v,.field p,.dist-n,.idx td,.cov td,.clean p,.sevkey ul,.foot-in,.ref{color:#1c1c1e!important}
+ h1,h2,h3,.fid,.riskbar-v,.stat-n,.cover h1{color:#111!important}
+ .doctype,.flabel,.cg-k,.mg-k,.dist-l,.stat-l,.brand-sub,.block-num,.idx thead th,.cov thead th{color:#9a5a08!important}
+ .cover,.block,.finding,.stat,.cg,.mg,.callout,.clean,.riskbar,.dist-track{background:#fff!important}
+ .cover-grid,.meta-grid{background:#cfcfcf!important}
+ .cover-grid,.meta-grid,.cg,.mg,.stat,.finding,.callout,.clean,.riskbar,.dist-track,.block h2{border-color:#cfcfcf!important}
+ .badge{border-color:#c9c9c9!important;color:#1c1c1e!important}
+ .badge.sev-critical{background:#f2860a!important;color:#111!important}
+ .badge.sev-high{color:#9a5a08!important;border-color:#9a5a08!important}
+ .dist-bar,.badge.sev-critical{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ a{color:#0b57d0!important}
+ .cover,.block{border-bottom:1px solid #cfcfcf!important}
+ .finding,.stat,.idx tr,.cov tr,.cg,.mg{break-inside:avoid}
+ .callout{background:#fff7ec!important;border-color:#f2860a!important}.callout p{color:#5a3d10!important}
+}`;
 $('#dlHtml').addEventListener('click',()=>download('html'));
 $('#dlJson').addEventListener('click',()=>download('json'));
+$('#dlPdf').addEventListener('click',savePdf);
+
+/* PDF: render the report into a hidden iframe and open the print dialog, where the
+   user picks "Save as PDF" / "Microsoft Print to PDF". Works in the native WebView2
+   window and in browser/app modes without a popup. */
+function savePdf(){
+  if(!haveResult){setStatus('run a scan first, then save a pdf.');return;}
+  try{
+    const html=buildHTML();
+    const old=document.getElementById('pdfFrame'); if(old)old.remove();
+    const f=document.createElement('iframe'); f.id='pdfFrame';
+    f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+    document.body.appendChild(f);
+    const d=f.contentWindow.document; d.open(); d.write(html); d.close();
+    const go=()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ setStatus('could not open the print dialog: '+e.message); }
+      setStatus('choose "save as pdf" (or microsoft print to pdf) in the print dialog.'); };
+    // give the iframe a moment to lay out (fonts, images) before printing
+    if(d.readyState==='complete'){ setTimeout(go,350); } else { f.onload=()=>setTimeout(go,350); }
+  }catch(e){ setStatus('could not build the pdf: '+e.message); }
+}
+
+/* ---- upload test image generator ----
+   Builds a genuinely valid PNG or JPG of about the chosen size and embeds a unique
+   canary plus benign access-control probe notes in the file's metadata (a PNG tEXt
+   chunk / a JPEG comment segment). The tester uploads it through the target's own
+   image field, then checks whether the stored file is reachable without a session,
+   guessable by id, served with metadata intact, or returned to the wrong user.
+   Nothing is uploaded automatically; this only writes a local file. */
+let genFmt='png', genSizeKB=200;
+function segWire(id,cb){ const box=$(id); box.querySelectorAll('.segb').forEach(b=>b.addEventListener('click',()=>{
+  box.querySelectorAll('.segb').forEach(x=>x.classList.remove('on')); b.classList.add('on'); cb(b.dataset.v); })); }
+segWire('#imgFmt',v=>genFmt=v);
+segWire('#imgSize',v=>genSizeKB=parseInt(v,10));
+
+function canaryToken(){
+  const r=(crypto&&crypto.getRandomValues)?crypto.getRandomValues(new Uint8Array(6)):null;
+  let hx=''; if(r){for(const b of r)hx+=b.toString(16).padStart(2,'0');} else {hx=Math.random().toString(16).slice(2,14);}
+  return 'brk_'+hx;
+}
+function crc32(bytes,start,end){
+  let c=~0; for(let i=start;i<end;i++){ c^=bytes[i]; for(let k=0;k<8;k++){ c=(c>>>1)^(0xEDB88320&(-(c&1))); } }
+  return (~c)>>>0;
+}
+function u32(n){return [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255];}
+
+// Build a small valid base image (random noise so JPEG cannot shrink it away), then
+// pad to the target size with a metadata block carrying the canary + notes.
+function buildTestImage(fmt,targetBytes,canary,note){
+  const dim=160, cv=document.createElement('canvas'); cv.width=dim; cv.height=dim;
+  const cx=cv.getContext('2d'), img=cx.createImageData(dim,dim), px=img.data;
+  for(let i=0;i<px.length;i+=4){ px[i]=Math.random()*256|0; px[i+1]=Math.random()*256|0; px[i+2]=Math.random()*256|0; px[i+3]=255; }
+  cx.putImageData(img,0,0);
+  // visible label so the file reads as a deliberate test artifact
+  cx.fillStyle='rgba(0,0,0,.55)'; cx.fillRect(0,dim-30,dim,30);
+  cx.fillStyle='#f2860a'; cx.font='bold 13px monospace'; cx.fillText('BREAKERO TEST',8,dim-11);
+  const metaText='Breakero access-control upload test. Canary='+canary+'. '+
+    (note?('Note='+note+'. '):'')+'Target='+(meta_target())+'. Authorized testing only. '+
+    'Probe: is this file reachable without auth, guessable by id (idor), served with metadata intact, or returned to another user?';
+  return new Promise((resolve,reject)=>{
+    const mime=fmt==='png'?'image/png':'image/jpeg';
+    cv.toBlob(b=>{ if(!b){reject(new Error('canvas export failed'));return;}
+      b.arrayBuffer().then(ab=>{ const base=new Uint8Array(ab);
+        const out=fmt==='png'?padPNG(base,targetBytes,metaText):padJPG(base,targetBytes,metaText);
+        resolve(new Blob([out],{type:mime})); }).catch(reject);
+    }, mime, fmt==='png'?undefined:0.92);
+  });
+}
+function meta_target(){ return (meta&&meta.target)|| ($('#url')&&$('#url').value.trim()) || 'n/a'; }
+
+// Insert a tEXt chunk (keyword "breakero") before IEND, sized so the whole file
+// reaches targetBytes. Result is a spec-valid PNG.
+function padPNG(base,target,metaText){
+  const iendPos=base.length-12; // length(4)+"IEND"(4)+crc(4)
+  const enc=new TextEncoder();
+  const kw=enc.encode('breakero'); // keyword
+  let text=metaText+' | padding:';
+  let textBytes=enc.encode(text);
+  const overhead=12+kw.length+1; // chunk len+type+crc + keyword + null
+  let need=target-base.length-overhead-textBytes.length;
+  if(need<0)need=0;
+  // pad with '.' to hit the size
+  const pad=new Uint8Array(need); pad.fill(46);
+  const dataLen=kw.length+1+textBytes.length+need;
+  const chunk=new Uint8Array(12+dataLen);
+  chunk.set(u32(dataLen),0);
+  chunk.set([116,69,88,116],4); // "tEXt"
+  let o=8; chunk.set(kw,o); o+=kw.length; chunk[o++]=0; chunk.set(textBytes,o); o+=textBytes.length; chunk.set(pad,o); o+=need;
+  const crc=crc32(chunk,4,8+dataLen); chunk.set(u32(crc),8+dataLen);
+  const out=new Uint8Array(base.length+chunk.length);
+  out.set(base.subarray(0,iendPos),0);
+  out.set(chunk,iendPos);
+  out.set(base.subarray(iendPos),iendPos+chunk.length);
+  return out;
+}
+// Insert JPEG COM (0xFFFE) comment segments right after SOI, sized to reach target.
+// Each COM segment holds at most 65533 bytes, so large targets use several.
+function padJPG(base,target,metaText){
+  const enc=new TextEncoder();
+  const first=enc.encode(metaText+' | padding:');
+  let need=target-base.length;
+  const segs=[];
+  // first comment carries the metadata
+  const mk=(payload)=>{ const len=payload.length+2; return {seg:new Uint8Array([0xFF,0xFE,(len>>8)&255,len&255,...payload]),bytes:len+2}; };
+  let firstSeg=mk(first); segs.push(firstSeg.seg); need-=firstSeg.bytes;
+  while(need>0){
+    const cap=Math.min(need-4,65533); if(cap<=0)break;
+    const pad=new Uint8Array(cap); pad.fill(46);
+    const s=mk(pad); segs.push(s.seg); need-=s.bytes;
+  }
+  let total=base.length; segs.forEach(s=>total+=s.length);
+  const out=new Uint8Array(total);
+  out.set(base.subarray(0,2),0); // SOI FFD8
+  let o=2; segs.forEach(s=>{ out.set(s,o); o+=s.length; });
+  out.set(base.subarray(2),o);
+  return out;
+}
+$('#genImg').addEventListener('click',async()=>{
+  const btn=$('#genImg'); btn.disabled=true; const old=btn.textContent; btn.textContent='building…';
+  try{
+    const canary=canaryToken();
+    const note=($('#imgNote').value||'').trim().slice(0,80);
+    const target=Math.round(genSizeKB*1024);
+    const blob=await buildTestImage(genFmt,target,canary,note);
+    const name='breakero-test-'+canary+'.'+(genFmt==='png'?'png':'jpg');
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{a.remove();URL.revokeObjectURL(a.href);},2000);
+    $('#genCanary').textContent=canary;
+    $('#genFile').textContent=name+' · '+(blob.size/1024).toFixed(0)+' kb · '+genFmt.toUpperCase();
+    $('#genOut').style.display='block';
+    setStatus('saved '+name+' ('+(blob.size/1024).toFixed(0)+' kb). upload it via the target form, then hunt for the canary.');
+  }catch(e){ setStatus('could not build the image: '+e.message); }
+  btn.disabled=false; btn.textContent=old;
+});
+$('#copyCanary').addEventListener('click',()=>{ const t=$('#genCanary').textContent;
+  if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>setStatus('canary copied.'),()=>{});}
+  else{const r=document.createRange();r.selectNode($('#genCanary'));getSelection().removeAllRanges();getSelection().addRange(r);try{document.execCommand('copy');setStatus('canary copied.');}catch(e){}} });
 
 /* ---- mini game: flappy shield ---- */
 /* tiny sound engine: cute blips built with the Web Audio API, no files, works offline.

@@ -1,32 +1,30 @@
-## Breakero v1.7.0
+## Breakero v1.8.0
 
-### The in-app report is now the premium one
+### Save the report as PDF
 
-The report you download from inside the app used to have a much plainer layout
-than the one the command line produced. Now they are the same premium
-security-assessment document, the kind you would hand to a client or an asset
-owner:
+There is now a "pdf" button next to the html and json downloads. It opens the
+report in the print dialog, where you pick "Save as PDF" (or "Microsoft Print to
+PDF" on Windows). The report carries a dedicated print stylesheet, so the PDF
+comes out as a clean, legible light-on-white document instead of the dark
+on-screen theme. For accurate totals, save it after the scan finishes.
 
-- A cover page with the target, scope, assessment date, a report reference and
-  an overall risk rating.
-- An executive summary that states the risk posture in plain language, with a
-  count of findings at each severity.
-- A risk overview with a severity breakdown, and a findings index you can click
-  straight into.
-- Detailed findings, each with a clean metadata grid (endpoint, module,
-  confidence, severity), evidence, business impact, recommended remediation and
-  a copy-ready reproduction block.
-- Methodology and scope, a verification note, and references.
-- The fixed "Contents" dropdown at the top, so a long report with many findings
-  is one click from any section instead of a scroll.
+### Upload test image generator
 
-### More accurate
+A new "upload test image" panel builds a real, valid image you can use to probe
+Broken Access Control on image-upload features (upload forms, avatars, document
+fields, anything that accepts a picture).
 
-- The severity counts and the overall risk rating are now taken from the
-  findings themselves, so the summary always matches the detailed list.
-- A report saved in the middle of a scan no longer shows a misleading "0.0s"
-  duration; it shows the live elapsed time until the final total is ready. For
-  the complete picture, download after the scan finishes.
+- Choose PNG or JPG and a target size: about 200 KB, 500 KB, 1 MB, or under 2 MB.
+- The generated image is a genuine, viewable file with a unique "canary" token
+  and benign access-control probe notes embedded in its metadata.
+- Upload it through the target's own image field, then check whether the stored
+  file is reachable without a session, guessable by id (IDOR), served with its
+  metadata intact, or returned to another user. The canary makes your file easy
+  to locate in responses and URLs.
+
+Nothing is uploaded for you: the tool only writes a local file, so you stay in
+control of the actual request, the same way Breakero's findings hand you the
+exact steps to confirm by hand. Only test uploads you are authorized to test.
 
 ### Downloads
 
