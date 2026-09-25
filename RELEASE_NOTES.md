@@ -1,23 +1,40 @@
-## Breakero v1.5.0
+## Breakero v1.6.0
 
-### See the scan happen
+### A report that looks like a real deliverable
 
-A scan used to be a spinner and a wait. Now there is a live progress line under
-the checks: how far along it is as a percent, a rough estimate of the time left,
-and how long it has been running.
+The HTML report has been rebuilt from the ground up to read like a professional
+security-assessment document, the kind you would hand to a client or an asset
+owner:
 
-Below that sits a process panel that reads like a terminal. It prints each check
-as it starts and finishes, findings as they come in, and the calibration step at
-the top. It is faint and monospace on purpose, so it looks like a log you can
-glance at rather than something you have to read.
+- A cover page with the target, scope, assessment date and an overall risk
+  rating.
+- An executive summary that states the risk posture in plain language and shows
+  the count of findings at each severity.
+- A risk overview with a severity breakdown, and a findings index table you can
+  click straight into.
+- Detailed findings, each with a clean metadata grid (endpoint, module,
+  confidence, severity), evidence, business impact, recommended remediation and
+  a copy-ready reproduction block.
+- Methodology and scope, a verification note, and references.
 
-### A game while you wait
+### Never scroll a long report again
 
-Long scans get boring. There is now a small "flappy shield" mini-game you can
-open from the "play a game while you wait" button. It slides in below the
-progress line, you click or press space to flap the shield through the gaps, and
-it keeps your best score. Close it any time with the × in its corner. It is
-entirely optional and does not touch the scan.
+A fixed "Contents" dropdown sits at the top of the report. It lists every
+section and every finding by its id and title, so no matter how many findings a
+scan produced, any part is one click away. Every detailed finding also has a
+"back to top" link.
+
+### The mini-game got a voice
+
+The flappy-shield game now has sound: small, playful blips for flapping,
+scoring and game over, built with the Web Audio API so there are no extra files
+and it works offline. A ♪ on/off toggle in the game's title bar turns it off
+whenever you like.
+
+### Easier to notice
+
+The "play a game while you wait" button is now a filled accent button with a
+gentle wiggle, so it stands out during a long scan.
 
 ### Downloads
 

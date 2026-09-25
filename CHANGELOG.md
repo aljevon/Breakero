@@ -4,6 +4,26 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-09-25
+
+### Added
+- The HTML report is now laid out as a proper security-assessment document: a
+  cover page with an overall risk rating, an executive summary, a risk overview
+  with a severity breakdown, a navigable findings index, and detailed findings
+  with a clean metadata grid, evidence, business impact and remediation. It
+  reads like an enterprise deliverable and prints sensibly.
+- An elegant "Contents" dropdown fixed to the top of the report. It lists every
+  section and every finding by id and title, so a long report with many findings
+  is one click away from any part instead of a long scroll. Each detailed
+  finding also has a "back to top" link.
+- Sound in the mini-game: small, playful blips built with the Web Audio API (no
+  files, works offline) for flapping, scoring and game over, with a ♪ on/off
+  toggle in the game's title bar.
+
+### Changed
+- The "play a game while you wait" button is now a filled accent button with a
+  gentle wiggle, so it is easier to notice during a long scan.
+
 ## [1.5.0] - 2026-09-25
 
 ### Added
@@ -152,6 +172,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.6.0]: https://github.com/aljevon/Breakero/releases/tag/v1.6.0
 [1.5.0]: https://github.com/aljevon/Breakero/releases/tag/v1.5.0
 [1.4.1]: https://github.com/aljevon/Breakero/releases/tag/v1.4.1
 [1.4.0]: https://github.com/aljevon/Breakero/releases/tag/v1.4.0

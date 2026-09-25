@@ -109,9 +109,19 @@ details.adv[open] summary::before{content:"[-] "}
 .progline.on{display:flex}
 .progline #pct{color:var(--acc);font-weight:700;min-width:34px}
 .progline .dot{color:var(--dim)}
-.progline .mini{margin-left:auto;background:transparent;border:1px solid var(--line2);color:var(--muted);border-radius:var(--r);
-  padding:5px 10px;font:11px var(--mono);cursor:pointer}
-.progline .mini:hover{border-color:var(--acc);color:var(--acc)}
+.progline .mini{margin-left:auto;background:var(--acc);border:1px solid var(--acc);color:#0b0b0c;border-radius:var(--r);
+  padding:5px 12px;font:700 11px var(--mono);cursor:pointer;position:relative;
+  animation:playWiggle 2.6s ease-in-out infinite;transform-origin:center}
+.progline .mini::before{content:"▸ ";color:#0b0b0c}
+.progline .mini:hover{filter:brightness(1.12);animation-play-state:paused}
+@keyframes playWiggle{
+  0%,86%,100%{transform:rotate(0) translateY(0);box-shadow:0 0 0 0 rgba(242,134,10,.55)}
+  88%{transform:rotate(-3deg) translateY(-1px)}
+  91%{transform:rotate(3deg) translateY(-1px)}
+  94%{transform:rotate(-2deg) translateY(0)}
+  97%{transform:rotate(1deg) translateY(0)}
+  43%{box-shadow:0 0 0 5px rgba(242,134,10,0)}}
+@media (prefers-reduced-motion:reduce){.progline .mini{animation:none}}
 .status{font-size:12px;color:var(--muted);margin-top:9px;min-height:16px}
 .status .live{color:var(--acc)}
 
@@ -127,9 +137,11 @@ details.adv[open] summary::before{content:"[-] "}
 #termMeta{color:var(--dim);text-transform:none;letter-spacing:0}
 
 /* mini game */
-.game-panel .h{display:flex;align-items:center}
-.gx{margin-left:auto;background:transparent;border:1px solid var(--line2);color:var(--muted);border-radius:3px;
+.game-panel .h{display:flex;align-items:center;gap:6px}
+.gx{background:transparent;border:1px solid var(--line2);color:var(--muted);border-radius:3px;
   width:22px;height:20px;line-height:1;cursor:pointer;font-size:14px}
+.gx#sndBtn{width:auto;padding:0 8px;height:20px;font:10px var(--mono);letter-spacing:.5px}
+.gx#sndBtn.off{color:var(--dim);border-style:dashed}
 .gx:hover{border-color:var(--acc);color:var(--acc)}
 .gpad{padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px}
 #gcanvas{width:100%;max-width:520px;height:auto;background:#08080a;border:1px solid var(--line2);border-radius:var(--r);cursor:pointer;touch-action:manipulation}
@@ -289,7 +301,7 @@ details.adv[open] summary::before{content:"[-] "}
 
   <!-- mini game -->
   <section class="panel game-panel" id="gamePanel" style="display:none">
-    <div class="h">flappy shield <button class="gx" id="gameClose" title="close">×</button></div>
+    <div class="h">flappy shield <button class="gx" id="sndBtn" title="sound on/off" style="margin-left:auto">♪ on</button><button class="gx" id="gameClose" title="close">×</button></div>
     <div class="gpad">
       <canvas id="gcanvas" width="520" height="240"></canvas>
       <div class="ghint" id="ghint">click the board or press space to flap</div>
@@ -583,10 +595,30 @@ $('#dlHtml').addEventListener('click',()=>download('html'));
 $('#dlJson').addEventListener('click',()=>download('json'));
 
 /* ---- mini game: flappy shield ---- */
+/* tiny sound engine: cute blips built with the Web Audio API, no files, works offline.
+   muted by default until you flip the speaker so it never surprises anyone. */
+const snd={ctx:null,on:true};
+function sndInit(){ if(snd.ctx)return; try{snd.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){snd.on=false;} }
+function beep(freqs,dur,type,vol,slide){
+  if(!snd.on||!snd.ctx)return;
+  if(snd.ctx.state==='suspended'){try{snd.ctx.resume();}catch(e){}}
+  const t0=snd.ctx.currentTime, o=snd.ctx.createOscillator(), g=snd.ctx.createGain();
+  o.type=type||'square'; o.connect(g); g.connect(snd.ctx.destination);
+  const f=Array.isArray(freqs)?freqs:[freqs];
+  o.frequency.setValueAtTime(f[0],t0);
+  for(let i=1;i<f.length;i++){ if(slide)o.frequency.linearRampToValueAtTime(f[i],t0+dur*i/f.length); else o.frequency.setValueAtTime(f[i],t0+dur*i/f.length); }
+  const v=vol||0.05;
+  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(v,t0+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.start(t0); o.stop(t0+dur+0.02);
+}
+const sFlap =()=>beep([520,760],0.11,'square',0.045,true);   // boing up
+const sScore=()=>beep([880,1320],0.13,'triangle',0.05,true); // happy ding
+const sOver =()=>beep([420,300,150],0.42,'sawtooth',0.06,true); // sad wah-wah
 const G={raf:0,open:false,st:'ready',x:100,y:120,vy:0,pipes:[],score:0,best:0,last:0,spawn:0};
 const gc=$('#gcanvas'), gx=gc.getContext('2d'), GW=gc.width, GH=gc.height;
 function gReset(){G.st='ready';G.x=100;G.y=GH/2;G.vy=0;G.pipes=[];G.score=0;G.spawn=0;}
-function gFlap(){ if(G.st==='ready'){G.st='play';G.vy=-6.0;} else if(G.st==='play'){G.vy=-6.0;} else {gReset();} }
+function gFlap(){ sndInit(); if(G.st==='ready'){G.st='play';G.vy=-6.0;sFlap();} else if(G.st==='play'){G.vy=-6.0;sFlap();} else {gReset();} }
 function gStep(ts){
   if(!G.open)return; const dt=G.last?Math.min(48,ts-G.last):16; G.last=ts;
   if(G.st==='play'){
@@ -595,11 +627,11 @@ function gStep(ts){
     for(const p of G.pipes){p.x-=1.9*dt/16;}
     G.pipes=G.pipes.filter(p=>p.x>-50);
     for(const p of G.pipes){
-      if(!p.scored&&p.x+46<G.x){p.scored=true;G.score++;G.best=Math.max(G.best,G.score);}
+      if(!p.scored&&p.x+46<G.x){p.scored=true;G.score++;G.best=Math.max(G.best,G.score);sScore();}
       const inX=G.x+10>p.x&&G.x-10<p.x+46;
-      if(inX&&(G.y-10<p.gap||G.y+10>p.gap+84)){G.st='over';}
+      if(inX&&(G.y-10<p.gap||G.y+10>p.gap+84)){if(G.st==='play')sOver();G.st='over';}
     }
-    if(G.y+10>=GH-14||G.y-10<=0){G.y=Math.min(G.y,GH-24);G.st='over';}
+    if(G.y+10>=GH-14||G.y-10<=0){G.y=Math.min(G.y,GH-24);if(G.st==='play')sOver();G.st='over';}
   }
   gDraw(); G.raf=requestAnimationFrame(gStep);
 }
@@ -634,6 +666,8 @@ function gameOpen(){ $('#gamePanel').style.display='block'; G.open=true; gReset(
 function gameClose(){ G.open=false; cancelAnimationFrame(G.raf); $('#gamePanel').style.display='none'; }
 $('#playBtn').addEventListener('click',gameOpen);
 $('#gameClose').addEventListener('click',gameClose);
+$('#sndBtn').addEventListener('click',()=>{ const b=$('#sndBtn'); snd.on=!snd.on;
+  b.textContent=snd.on?'♪ on':'♪ off'; b.classList.toggle('off',!snd.on); if(snd.on){sndInit();beep(660,0.08,'triangle',0.04);} });
 gc.addEventListener('mousedown',e=>{e.preventDefault();gFlap();});
 gc.addEventListener('touchstart',e=>{e.preventDefault();gFlap();},{passive:false});
 addEventListener('keydown',e=>{ if(!G.open)return; const a=document.activeElement;
