@@ -35,25 +35,10 @@ type privVector struct {
 	value string
 }
 
-var privVectors = []privVector{
-	{"query", "admin", "true"},
-	{"query", "isAdmin", "true"},
-	{"query", "is_admin", "1"},
-	{"query", "role", "admin"},
-	{"query", "debug", "true"},
-	{"query", "access", "1"},
-	{"header", "X-User-Role", "admin"},
-	{"header", "X-Role", "admin"},
-	{"header", "X-Admin", "true"},
-	{"header", "X-Is-Admin", "true"},
-	{"cookie", "admin", "true"},
-	{"cookie", "role", "admin"},
-	{"cookie", "isAdmin", "1"},
-}
-
 func (c *ParamPrivilegeCheck) Run(ctx *Context) ([]finding.Finding, error) {
 	cfg := ctx.Config
 	anon := cfg.AnonymousRole()
+	vectors := privVectorsFor(cfg.RoleGuessLimit())
 
 	var out []finding.Finding
 	for _, ep := range endpointsOrDefault(cfg) {
@@ -74,7 +59,7 @@ func (c *ParamPrivilegeCheck) Run(ctx *Context) ([]finding.Finding, error) {
 			continue // only meaningful when the plain request is denied
 		}
 
-		for _, v := range privVectors {
+		for _, v := range vectors {
 			if ctx.Client.BudgetExceeded() {
 				return out, nil
 			}

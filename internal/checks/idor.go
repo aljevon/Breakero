@@ -37,13 +37,24 @@ func (IDORCheck) Teaches() string {
 func (c *IDORCheck) Run(ctx *Context) ([]finding.Finding, error) {
 	cfg := ctx.Config
 	endpoints := idParamEndpoints(cfg)
-	if len(endpoints) == 0 {
-		ctx.Log.Printf("[idor] skipped: no endpoints with id_param configured")
-		return nil, nil
-	}
+	roles := cfg.Roles
 
 	var out []finding.Finding
-	roles := cfg.Roles
+
+	// Automatic probe: when there is nothing to compare against manually, walk a
+	// dictionary of common REST id paths and read a short run of sequential ids.
+	// If distinct, valid objects come back, references are guessable/unprotected.
+	// This is what lets IDOR work with no config at all.
+	if cfg.AutoIDOR {
+		out = append(out, c.autoProbe(ctx)...)
+	}
+
+	if len(endpoints) == 0 {
+		if !cfg.AutoIDOR {
+			ctx.Log.Printf("[idor] no endpoints with id_param configured; enable auto-idor or add endpoints")
+		}
+		return out, nil
+	}
 
 	for _, ep := range endpoints {
 		method := methodOf(ep)
@@ -150,6 +161,145 @@ func (c *IDORCheck) Run(ctx *Context) ([]finding.Finding, error) {
 		}
 	}
 	return out, nil
+}
+
+// autoProbe walks a dictionary of common id-bearing REST paths (and id query
+// parameters on the target) reading a short run of sequential ids. When distinct,
+// valid objects come back for ids the caller does not own, object references are
+// guessable and unprotected. It reads only (GET) and stops at the request budget.
+func (c *IDORCheck) autoProbe(ctx *Context) []finding.Finding {
+	cfg := ctx.Config
+	depth := cfg.IDProbeDepth()
+	role := actingRole(cfg)
+	var out []finding.Finding
+	reported := map[string]bool{}
+
+	probe := func(label string, build func(id string) (string, error)) {
+		if reported[label] || ctx.Client.BudgetExceeded() {
+			return
+		}
+		// Find a seed id that returns a real object.
+		var baseResp *httpx.Response
+		var baseID string
+		for _, seed := range []string{"1", "1000"} {
+			if ctx.Client.BudgetExceeded() {
+				return
+			}
+			u, err := build(seed)
+			if err != nil {
+				continue
+			}
+			resp, err := ctx.Client.Do(ctx.Ctx, httpx.RequestSpec{
+				Method: "GET", URL: u, Headers: role.Headers, Cookie: role.Cookie,
+			})
+			if err != nil || !isGrantedContent(resp) || ctx.LooksLikeCatchAll(resp) {
+				continue
+			}
+			baseResp, baseID = resp, seed
+			break
+		}
+		if baseResp == nil {
+			return
+		}
+		start, _ := strconv.Atoi(baseID)
+		distinct := 0
+		var sampleURL, sampleID string
+		for i := 1; i <= depth; i++ {
+			if ctx.Client.BudgetExceeded() {
+				break
+			}
+			nid := strconv.Itoa(start + i)
+			nu, err := build(nid)
+			if err != nil {
+				continue
+			}
+			resp, err := ctx.Client.Do(ctx.Ctx, httpx.RequestSpec{
+				Method: "GET", URL: nu, Headers: role.Headers, Cookie: role.Cookie,
+			})
+			if err != nil || !isGrantedContent(resp) || ctx.LooksLikeCatchAll(resp) {
+				continue
+			}
+			sim := similarity(resp.Body, baseResp.Body)
+			if sim > 0.3 && sim < 0.98 {
+				distinct++
+				if sampleURL == "" {
+					sampleURL, sampleID = nu, nid
+				}
+			}
+		}
+		if distinct == 0 {
+			return
+		}
+		reported[label] = true
+		who := "an anonymous visitor"
+		if role.Cookie != "" || len(role.Headers) > 0 {
+			who = "the supplied session"
+		}
+		out = append(out, finding.New(c.ID(),
+			fmt.Sprintf("Guessable object references on %s (%d neighbouring id(s) readable)", label, distinct),
+			finding.Medium).
+			WithURL(sampleURL).WithMethod("GET").
+			WithMeaning(c.Teaches()).
+			WithEvidence(fmt.Sprintf(
+				"Reading sequential ids as %s: id %s returned a valid object and adjacent id %s returned a "+
+					"different, valid object. %d of the next %d ids were distinct, readable records. Sequential, "+
+					"unprotected references can be enumerated to reach other users' data.",
+				who, baseID, sampleID, distinct, depth)).
+			WithConfidence("needs-review").
+			WithRepro(reproWithCookie("GET", sampleURL, nil, role.Cookie,
+				"Open the URL. It uses an id you do not own ("+sampleID+"). If a valid, different record loads, "+
+					"walk the ids up and down to confirm you can reach other objects.")).
+			WithRemediation("Enforce per-object authorization on every lookup: the authenticated caller must own "+
+				"or be explicitly granted the specific object. Do not trust the id from the request. Prefer "+
+				"unguessable identifiers (UUIDs) as defence in depth, never as the control."))
+	}
+
+	// 1. REST-style id paths.
+	for _, tpl := range idPathTemplates {
+		if ctx.Client.BudgetExceeded() {
+			return out
+		}
+		t := tpl
+		probe("path "+t, func(id string) (string, error) {
+			return cfg.NormalizeURL(strings.ReplaceAll(t, "{id}", id))
+		})
+	}
+
+	// 2. id query parameters on the target path (only fires when the parameter
+	//    actually changes the response into distinct objects, so the homepage
+	//    does not produce false positives).
+	base, err := cfg.NormalizeURL("/")
+	if cfg.BaseURL != "" && err == nil {
+		maxKeys := 14
+		for i, key := range idParamKeys {
+			if i >= maxKeys || ctx.Client.BudgetExceeded() {
+				break
+			}
+			k := key
+			probe("query "+k, func(id string) (string, error) {
+				u, e := url.Parse(base)
+				if e != nil {
+					return "", e
+				}
+				q := u.Query()
+				q.Set(k, id)
+				u.RawQuery = q.Encode()
+				return u.String(), nil
+			})
+		}
+	}
+	return out
+}
+
+// actingRole picks the identity the automatic probe sends as: a configured role
+// carrying a session (cookie or headers) when available, otherwise anonymous.
+func actingRole(cfg *config.Config) config.Role {
+	for _, r := range cfg.Roles {
+		if r.Cookie != "" || len(r.Headers) > 0 {
+			return r
+		}
+	}
+	return cfg.AnonymousRole()
 }
 
 func idParamEndpoints(cfg *config.Config) []config.Endpoint {

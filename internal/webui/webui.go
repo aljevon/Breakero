@@ -224,13 +224,16 @@ func (s *Server) handleQuit(w http.ResponseWriter, r *http.Request) {
 }
 
 type scanRequest struct {
-	URL         string   `json:"url"`
-	Authorized  bool     `json:"authorized"`
-	Rate        float64  `json:"rate"`
-	MaxRequests int      `json:"max_requests"`
-	Active      bool     `json:"active"`
-	Cookie      string   `json:"cookie"`
-	Checks      []string `json:"checks"`
+	URL            string   `json:"url"`
+	Authorized     bool     `json:"authorized"`
+	Rate           float64  `json:"rate"`
+	MaxRequests    int      `json:"max_requests"`
+	Active         bool     `json:"active"`
+	Cookie         string   `json:"cookie"`
+	Checks         []string `json:"checks"`
+	MaxRoleGuesses int      `json:"max_role_guesses"`
+	AutoIDOR       bool     `json:"auto_idor"`
+	IDORDepth      int      `json:"idor_depth"`
 }
 
 func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
@@ -251,6 +254,9 @@ func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
 		MaxRequests:        req.MaxRequests,
 		AllowStateChanging: req.Active,
 		Checks:             req.Checks,
+		MaxRoleGuesses:     req.MaxRoleGuesses,
+		AutoIDOR:           req.AutoIDOR,
+		IDORDepth:          req.IDORDepth,
 	}
 	if cfg.RatePerSecond <= 0 {
 		cfg.RatePerSecond = 12

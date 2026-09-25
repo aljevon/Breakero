@@ -66,6 +66,18 @@ type Config struct {
 	// Checks selects which modules run. Empty means "all".
 	Checks []string `json:"checks,omitempty"`
 
+	// MaxRoleGuesses caps how many client-controlled privilege vectors the
+	// param-privilege check tries per blocked endpoint. It lets the app expose a
+	// "role guesses" slider so users get broad role/permission coverage without
+	// editing this file. 0 means use a sensible default.
+	MaxRoleGuesses int `json:"max_role_guesses,omitempty"`
+	// AutoIDOR turns on automatic IDOR probing of common REST id paths (and any
+	// configured id endpoints) even when no roles or owned ids are configured.
+	AutoIDOR bool `json:"auto_idor,omitempty"`
+	// IDORDepth is how many neighbouring ids the automatic IDOR probe reads to
+	// judge whether object references are guessable. 0 means use a default.
+	IDORDepth int `json:"idor_depth,omitempty"`
+
 	// Safety and pacing controls.
 	RatePerSecond      float64 `json:"rate_per_second,omitempty"`
 	MaxRequests        int     `json:"max_requests,omitempty"`
@@ -179,6 +191,32 @@ func (c *Config) Validate() error {
 		seen[strings.ToLower(r.Name)] = true
 	}
 	return nil
+}
+
+// RoleGuessLimit returns the effective cap on privilege vectors, clamped to a
+// safe range. 0 (unset) becomes a sensible default.
+func (c *Config) RoleGuessLimit() int {
+	n := c.MaxRoleGuesses
+	if n <= 0 {
+		return 14
+	}
+	if n > 150 {
+		return 150
+	}
+	return n
+}
+
+// IDProbeDepth returns how many neighbouring ids the automatic IDOR probe reads,
+// clamped to a safe range. 0 (unset) becomes a sensible default.
+func (c *Config) IDProbeDepth() int {
+	n := c.IDORDepth
+	if n <= 0 {
+		return 4
+	}
+	if n > 50 {
+		return 50
+	}
+	return n
 }
 
 // NormalizeURL joins a possibly-relative path onto the base URL.

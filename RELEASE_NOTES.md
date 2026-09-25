@@ -1,30 +1,40 @@
-## Breakero v1.8.0
+## Breakero v1.9.0
 
-### Save the report as PDF
+### IDOR and role testing now work with no config file
 
-There is now a "pdf" button next to the html and json downloads. It opens the
-report in the print dialog, where you pick "Save as PDF" (or "Microsoft Print to
-PDF" on Windows). The report carries a dedicated print stylesheet, so the PDF
-comes out as a clean, legible light-on-white document instead of the dark
-on-screen theme. For accurate totals, save it after the scan finishes.
+Testing for IDOR and privilege problems used to need a hand-written
+`configs/example.json` describing which role holds which login and which objects
+belong to whom. Now the app carries that knowledge built in, so a beginner can
+paste a URL, press Scan, and get real coverage.
 
-### Upload test image generator
+- A large built-in dictionary of role and permission values (admin, manager,
+  editor, staff, moderator, superadmin and dozens more) is tried on blocked
+  pages, the classic "role controlled by a request value" bug.
+- A new automatic IDOR probe walks a dictionary of common object-id parameters
+  and REST id paths (`/api/users/{id}`, `/account?id=`, and so on), reading a
+  short run of sequential ids to spot guessable, unprotected object references.
 
-A new "upload test image" panel builds a real, valid image you can use to probe
-Broken Access Control on image-upload features (upload forms, avatars, document
-fields, anything that accepts a picture).
+### Two elegant sliders, no file to edit
 
-- Choose PNG or JPG and a target size: about 200 KB, 500 KB, 1 MB, or under 2 MB.
-- The generated image is a genuine, viewable file with a unique "canary" token
-  and benign access-control probe notes embedded in its metadata.
-- Upload it through the target's own image field, then check whether the stored
-  file is reachable without a session, guessable by id (IDOR), served with its
-  metadata intact, or returned to another user. The canary makes your file easy
-  to locate in responses and URLs.
+The app's Advanced panel now has a "roles & idor" section:
 
-Nothing is uploaded for you: the tool only writes a local file, so you stay in
-control of the actual request, the same way Breakero's findings hand you the
-exact steps to confirm by hand. Only test uploads you are authorized to test.
+- **role guesses** — how many role/permission values to try on each blocked page,
+  from light to thorough.
+- **id enumeration depth** — how many neighbouring ids the automatic IDOR probe
+  reads, from shallow to deep.
+- **auto-probe idor on common api paths** — on by default.
+
+The defaults are tuned so you get IDOR and role coverage straight away without
+touching anything. A config file is still there for the deeper case, where you
+want to test as specific logged-in accounts and compare them.
+
+### Tested on all three builds
+
+Windows, Linux and macOS builds are produced from the same engine and the same
+in-app interface; only the way the window opens differs. The full feature set —
+scanning, the new IDOR and role coverage, and the HTML, PDF and JSON reports plus
+the upload test-image generator — was exercised end to end against the shipped
+binary and works the same on each.
 
 ### Downloads
 

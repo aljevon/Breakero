@@ -177,7 +177,13 @@ The HTML report is a single file with nothing external, so you can open it anywh
 
 ## Config file
 
-IDOR and privilege escalation need a bit more context. Breakero has to know which role holds which login, and which objects belong to whom. The full example is [`configs/example.json`](configs/example.json). The gist:
+You do not need a config file to find IDOR and privilege problems. Out of the box the app carries a large built-in dictionary of role and permission values (admin, manager, editor, staff, and dozens more) and common object-id parameters and REST id paths (`/api/users/{id}`, `?id=`, and so on). It guesses privilege on blocked pages and walks sequential ids on common API paths automatically. Two controls in the app's Advanced panel tune this without touching any file:
+
+- **role guesses** — how many role/permission values to try on blocked pages. A slider, from light to thorough.
+- **id enumeration depth** — how many neighbouring ids the automatic IDOR probe reads. A slider, from shallow to deep.
+- **auto-probe idor on common api paths** — on by default.
+
+A config file is only for the deeper case, where you want to test as specific logged-in accounts and compare them. It lets Breakero know which role holds which login, and which objects belong to whom. The full example is [`configs/example.json`](configs/example.json). The gist:
 
 ```json
 {

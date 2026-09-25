@@ -74,6 +74,22 @@ input:focus{border-color:var(--acc)}
 .btn.stop{background:transparent;border-color:var(--acc);color:var(--acc)}
 .btn.sm{padding:7px 12px;font-size:12px;font-weight:600}
 
+/* advanced subheading + elegant sliders */
+.subhead{margin:6px 0 2px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--acc);
+  border-top:1px solid var(--line);padding-top:12px}
+.sld{margin-top:4px}
+.sld-top{display:flex;align-items:baseline;justify-content:space-between}
+.sld-val{font:700 13px var(--mono);color:var(--acc);min-width:28px;text-align:right}
+.sld input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;margin:9px 0 4px;
+  border-radius:3px;background:linear-gradient(var(--acc),var(--acc)) 0/var(--fill,25%) 100% no-repeat, var(--line2);
+  outline:none;cursor:pointer}
+.sld input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;
+  border-radius:50%;background:var(--acc);border:2px solid #0b0b0c;box-shadow:0 0 0 1px var(--acc);cursor:pointer}
+.sld input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--acc);
+  border:2px solid #0b0b0c;box-shadow:0 0 0 1px var(--acc);cursor:pointer}
+.sld input[type=range]:focus{box-shadow:0 0 0 2px var(--acc-soft,rgba(242,134,10,.25))}
+.sld-scale{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim)}
+
 .scope{color:var(--dim);font-size:11.5px;margin-top:7px}
 .scope b{color:var(--muted)}
 
@@ -300,6 +316,24 @@ details.adv[open] summary::before{content:"[-] "}
           <label class="chk" style="grid-column:1/-1" data-tip="<b>careful</b> lets the scan send post/put/patch/delete, which can change data. only with permission.">
             <input type="checkbox" id="active">
             <span class="t"><b>allow state-changing requests</b> (post/put/patch/delete). off by default.</span></label>
+
+          <div class="subhead" style="grid-column:1/-1">roles &amp; idor · no config file needed</div>
+
+          <div class="sld" style="grid-column:1/-1" data-tip="<b>role guesses</b> how many built-in role/permission values (admin, manager, editor, staff…) to try on blocked pages. more = deeper coverage, more requests.">
+            <div class="sld-top"><label class="lab">role guesses</label><span class="sld-val" id="roleGuessesVal">14</span></div>
+            <input type="range" id="roleGuesses" min="1" max="60" value="14">
+            <div class="sld-scale"><span>light</span><span>thorough</span></div>
+          </div>
+
+          <div class="sld" style="grid-column:1/-1" data-tip="<b>id enumeration depth</b> how many neighbouring ids the automatic idor probe reads on common api paths to judge whether object references are guessable.">
+            <div class="sld-top"><label class="lab">id enumeration depth</label><span class="sld-val" id="idorDepthVal">4</span></div>
+            <input type="range" id="idorDepth" min="0" max="20" value="4">
+            <div class="sld-scale"><span>shallow</span><span>deep</span></div>
+          </div>
+
+          <label class="chk" style="grid-column:1/-1" data-tip="<b>auto idor</b> probes a dictionary of common rest id paths (/api/users/{id}, /account?id=…) with sequential ids to spot guessable, unprotected object references — no config needed.">
+            <input type="checkbox" id="autoIdor" checked>
+            <span class="t"><b>auto-probe idor on common api paths</b> (uses the built-in id dictionary). on by default.</span></label>
         </div>
       </details>
 
@@ -478,6 +512,13 @@ function refresh(){
 }
 $('#url').addEventListener('input',refresh);
 $('#authz').addEventListener('change',refresh);
+
+/* elegant sliders: live value + accent fill */
+function bindSlider(id,valId){ const s=$(id),v=$(valId); if(!s)return;
+  const upd=()=>{ v.textContent=s.value; const pct=(s.value-s.min)/(s.max-s.min)*100; s.style.setProperty('--fill',pct+'%'); };
+  s.addEventListener('input',upd); upd(); }
+bindSlider('#roleGuesses','#roleGuessesVal');
+bindSlider('#idorDepth','#idorDepthVal');
 $('#url').addEventListener('keydown',e=>{if(e.key==='Enter'&&!running&&!$('#scan').disabled)runScan();});
 
 $('#scan').addEventListener('click',()=>{ if(running){ controller&&controller.abort(); } else { runScan(); } });
@@ -501,7 +542,10 @@ async function runScan(){
   let total=1,done=0; controller=new AbortController();
   const body=JSON.stringify({url:$('#url').value.trim(),authorized:$('#authz').checked,
     rate:parseFloat($('#rate').value)||12,max_requests:parseInt($('#maxreq').value)||1500,
-    active:$('#active').checked,cookie:$('#cookie').value.trim(),checks:[...selected]});
+    active:$('#active').checked,cookie:$('#cookie').value.trim(),checks:[...selected],
+    max_role_guesses:parseInt($('#roleGuesses').value)||14,
+    auto_idor:$('#autoIdor').checked,
+    idor_depth:parseInt($('#idorDepth').value)||4});
   let stopped=false;
   try{
     const res=await fetch('/api/scan',{method:'POST',headers:H,body,signal:controller.signal});

@@ -4,6 +4,27 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-09-25
+
+### Added
+- IDOR and privilege testing now work with no config file. Breakero ships with a
+  large built-in dictionary of role and permission values (admin, manager,
+  editor, staff and dozens more) and of common object-id parameters and REST id
+  paths (`/api/users/{id}`, `?id=`, and so on). The param-privilege check guesses
+  privilege on blocked pages, and a new automatic IDOR probe walks sequential ids
+  on common API paths to spot guessable, unprotected object references.
+- Two elegant sliders in the app's Advanced panel, so there is no file to edit:
+  - **role guesses** — how many role/permission values to try on blocked pages.
+  - **id enumeration depth** — how many neighbouring ids the automatic IDOR probe
+    reads.
+  Plus an **auto-probe idor on common api paths** toggle (on by default). Sensible
+  defaults mean a beginner can just paste a URL and press Scan.
+
+### Changed
+- The README's config-file section now explains that a config is only needed for
+  testing as specific logged-in accounts; everyday IDOR and role coverage is
+  built in.
+
 ## [1.8.0] - 2026-09-25
 
 ### Added
@@ -205,6 +226,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.9.0]: https://github.com/aljevon/Breakero/releases/tag/v1.9.0
 [1.8.0]: https://github.com/aljevon/Breakero/releases/tag/v1.8.0
 [1.7.0]: https://github.com/aljevon/Breakero/releases/tag/v1.7.0
 [1.6.0]: https://github.com/aljevon/Breakero/releases/tag/v1.6.0
