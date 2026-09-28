@@ -101,20 +101,53 @@ Pick the file for your machine on the [**Releases**](../../releases) page:
 
 Three files, one per system. The macOS download is a universal binary: it runs **natively** on both Apple Silicon (M1/M2/M3) and Intel Macs, so there's no Rosetta and nothing extra to install.
 
-Windows, from PowerShell in your downloads folder:
+Then follow the steps for your system.
+
+#### Windows
+
+**The easy way:** double-click `breakero-windows-amd64.exe`. The app opens in its own window, no console, nothing to install. The first time, Windows SmartScreen may say "Windows protected your PC" because the file isn't code-signed (normal for open-source tools): click **More info → Run anyway**.
+
+Prefer the terminal? From PowerShell in your Downloads folder:
 
 ```powershell
-.\breakero-windows-amd64.exe -version
+.\breakero-windows-amd64.exe -gui      # open the app
+.\breakero-windows-amd64.exe -version  # just print the version
 ```
 
-Or skip the terminal entirely: **double-click the exe** and the app opens in your browser. No console window, nothing to install, nothing copied to hidden folders. The exe carries the Breakero icon so it's easy to spot. On macOS and Linux it's the same idea, run the binary with no arguments (or `breakero -gui`) and the app opens.
+#### macOS (Apple Silicon M1/M2/M3 and Intel)
 
-Linux or macOS, mark it runnable first:
+The download is one universal binary that runs natively on any Mac, no Rosetta. Open **Terminal** (press Cmd+Space, type "Terminal") and, in your Downloads folder:
 
 ```bash
-chmod +x breakero-linux-amd64
-./breakero-linux-amd64 -version
+cd ~/Downloads
+chmod +x breakero-darwin-universal     # make it runnable (once)
+./breakero-darwin-universal -gui       # open the app
 ```
+
+Because the binary isn't signed with an Apple Developer certificate, Gatekeeper may block the first launch ("cannot be opened because the developer cannot be verified"). This is normal for open-source tools. Do any one of these, once:
+
+- In Finder, **right-click** the file → **Open**, then **Open** again in the dialog. After that it opens normally (double-click works too).
+- Or open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to the Breakero message.
+- Or clear the quarantine flag in Terminal, then run it again:
+
+  ```bash
+  xattr -d com.apple.quarantine breakero-darwin-universal
+  ```
+
+Want to confirm it really is universal? `file breakero-darwin-universal` prints `Mach-O universal binary with 2 architectures: [x86_64] [arm64]`.
+
+#### Linux
+
+Open a terminal in your download folder:
+
+```bash
+chmod +x breakero-linux-amd64          # make it runnable (once)
+./breakero-linux-amd64 -gui            # open the app
+```
+
+The app opens in a dedicated Chrome/Chromium/Edge/Brave window, falling back to your default browser. On a headless or server box with no desktop, `-gui` still starts the local server and prints a `http://127.0.0.1:…` URL you can open in any browser. Check the version with `./breakero-linux-amd64 -version`.
+
+On every system, `-gui` opens the graphical app; leave it off and pass flags such as `-url … -i-am-authorized` (see [Quick start](#quick-start)) to drive the command-line engine instead.
 
 ### Or build it
 
