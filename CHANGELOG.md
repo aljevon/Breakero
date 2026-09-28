@@ -4,6 +4,15 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-09-28
+
+### Changed
+- The macOS download is now a universal binary that runs **natively** on both
+  Apple Silicon (M1/M2/M3) and Intel Macs. Apple Silicon users no longer need
+  Rosetta, so there's nothing extra to install and no Rosetta storage to give up.
+  The release still ships three files; the single `breakero-darwin-universal`
+  replaces `breakero-darwin-amd64` and covers every Mac natively.
+
 ## [1.9.1] - 2026-09-25
 
 ### Fixed
@@ -238,6 +247,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.10.0]: https://github.com/aljevon/Breakero/releases/tag/v1.10.0
 [1.9.1]: https://github.com/aljevon/Breakero/releases/tag/v1.9.1
 [1.9.0]: https://github.com/aljevon/Breakero/releases/tag/v1.9.0
 [1.8.0]: https://github.com/aljevon/Breakero/releases/tag/v1.8.0

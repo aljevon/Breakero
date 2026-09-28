@@ -87,10 +87,10 @@ jobs:
           else
             NOTES_ARG="--generate-notes"
           fi
-          # Ship exactly three files so the download page stays simple:
-          # Windows, Linux and macOS, 64-bit.
+          # Ship exactly three files so the download page stays simple: Windows,
+          # Linux, and one universal macOS binary (Intel + Apple Silicon, native).
           gh release create "$RELEASE_TAG" \
-            breakero-windows-amd64.exe breakero-linux-amd64 breakero-darwin-amd64 \
+            breakero-windows-amd64.exe breakero-linux-amd64 breakero-darwin-universal \
             --title "Breakero $RELEASE_TAG" \
             --target "$GITHUB_SHA" \
             $NOTES_ARG
