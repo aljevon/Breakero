@@ -4,6 +4,27 @@ Notable changes land here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-10-01
+
+### Added
+- Post-login (authenticated) testing. A new "post-login sessions" panel in the
+  app lets you paste one or more logged-in sessions — a cookie and/or an auth
+  header, with a privilege level and optional owned object ids — so Breakero
+  tests behind the login. With two sessions it compares them to find:
+  - **Vertical privilege escalation**: a low-privilege session reaching a page or
+    action that should require a higher role (e.g. a normal user opening
+    `/admin`). The privilege-escalation check now runs against the built-in
+    sensitive-path list when no endpoints are configured, so this works with no
+    config file.
+  - **Cross-account IDOR / BOLA**: one session reading another account's objects
+    by id, using the owned ids you provide across the built-in id-path dictionary.
+  It stays strictly read-only (GET only) — it detects and reports, and never
+  changes or extracts data.
+
+### Changed
+- The single "session cookie" field in Advanced moved into the richer post-login
+  sessions panel, which supports multiple sessions and auth headers.
+
 ## [1.10.0] - 2026-09-28
 
 ### Changed
@@ -247,6 +268,7 @@ First public release.
 - Unit and integration tests, plus a GitHub Actions pipeline that builds and
   publishes releases.
 
+[1.11.0]: https://github.com/aljevon/Breakero/releases/tag/v1.11.0
 [1.10.0]: https://github.com/aljevon/Breakero/releases/tag/v1.10.0
 [1.9.1]: https://github.com/aljevon/Breakero/releases/tag/v1.9.1
 [1.9.0]: https://github.com/aljevon/Breakero/releases/tag/v1.9.0

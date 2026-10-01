@@ -309,6 +309,16 @@ func idParamEndpoints(cfg *config.Config) []config.Endpoint {
 			eps = append(eps, e)
 		}
 	}
+	// With auto-IDOR and no explicit id endpoints, synthesize them from the
+	// built-in REST id-path dictionary so the cross-user technique (reading
+	// another session's owned id) and neighbour probing work on common paths with
+	// no config. These loops only act when a session carries owned ids; without
+	// them they make no requests and the sequential auto-probe does the work.
+	if len(eps) == 0 && cfg.AutoIDOR {
+		for _, tpl := range idPathTemplates {
+			eps = append(eps, config.Endpoint{Path: tpl, Method: "GET"})
+		}
+	}
 	return eps
 }
 

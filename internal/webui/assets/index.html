@@ -196,6 +196,25 @@ details.adv[open] summary::before{content:"[-] "}
 .btn.xs{padding:4px 9px;font-size:11px;font-weight:600}
 .genhint{color:var(--dim);font-size:11.5px;margin:8px 0 0;line-height:1.6}
 
+/* post-login sessions */
+.hint{font-size:11.5px;color:var(--dim);line-height:1.5}
+.hint b{color:var(--muted)}
+.sesspanel .disc{color:var(--muted);font-size:12.5px;margin:0 0 14px;line-height:1.6}
+.sesspanel .disc b{color:var(--ink)}
+.sessions{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.sess{border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:var(--r);padding:12px 14px;position:relative;background:rgba(255,255,255,.012)}
+.sess-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.sess-grid .wide{grid-column:1/-1}
+.sess-grid .lab{margin-bottom:5px}
+.sess select{width:100%;background:#08080a;border:1px solid var(--line2);color:var(--ink);border-radius:var(--r);
+  padding:10px 11px;font:13px var(--mono);outline:none;cursor:pointer}
+.sess select:focus{border-color:var(--acc)}
+.sess-x{position:absolute;top:8px;right:8px;width:22px;height:20px;background:transparent;border:1px solid var(--line2);
+  color:var(--muted);border-radius:3px;cursor:pointer;font-size:14px;line-height:1}
+.sess-x:hover{border-color:var(--acc);color:var(--acc)}
+.sess-tag{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:8px;display:block}
+@media(max-width:620px){.sess-grid{grid-template-columns:1fr}}
+
 /* results */
 .results{display:none}
 .results.on{display:block}
@@ -310,9 +329,7 @@ details.adv[open] summary::before{content:"[-] "}
           <div><label class="lab">request budget</label>
             <input type="number" id="maxreq" value="1500" min="50" step="50"
               data-tip="<b>budget</b> hard cap on total requests. the scan stops when it is reached."></div>
-          <div style="grid-column:1/-1"><label class="lab">session cookie (optional)</label>
-            <input type="text" id="cookie" placeholder="session=..." autocomplete="off" spellcheck="false"
-              data-tip="<b>logged-in scan</b> paste a cookie to test as a signed-in user. enables cross-account checks."></div>
+          <div class="hint" style="grid-column:1/-1">logged-in testing moved to its own <b>post-login sessions</b> panel below — paste your cookie there to scan behind the login.</div>
           <label class="chk" style="grid-column:1/-1" data-tip="<b>careful</b> lets the scan send post/put/patch/delete, which can change data. only with permission.">
             <input type="checkbox" id="active">
             <span class="t"><b>allow state-changing requests</b> (post/put/patch/delete). off by default.</span></label>
@@ -346,6 +363,19 @@ details.adv[open] summary::before{content:"[-] "}
       <div class="err" id="err"></div>
     </div>
   </div>
+
+  <!-- post-login authenticated sessions -->
+  <section class="panel sesspanel">
+    <div class="h">post-login sessions <span class="hsub">authenticated access control · read-only</span></div>
+    <div class="pad">
+      <p class="disc">paste one or more logged-in sessions (a cookie and/or an auth header) to test <b>behind the login</b>.
+      breakero sends requests as these sessions to detect cross-account <b>idor</b> and <b>privilege escalation</b> — it only
+      reads, it never changes or extracts data. for vertical privilege testing, add a low-privilege session <b>and</b> an
+      admin session; for cross-user idor, add two peer accounts (or fill in owned ids). only use sessions you are authorized to test.</p>
+      <div class="sessions" id="sessions"></div>
+      <button class="btn sm" id="addSession" data-tip="add another logged-in session to compare">+ add session</button>
+    </div>
+  </section>
 
   <!-- live process log (terminal) -->
   <section class="panel term-panel" id="termPanel" style="display:none">
@@ -519,6 +549,51 @@ function bindSlider(id,valId){ const s=$(id),v=$(valId); if(!s)return;
   s.addEventListener('input',upd); upd(); }
 bindSlider('#roleGuesses','#roleGuessesVal');
 bindSlider('#idorDepth','#idorDepthVal');
+
+/* ---- post-login sessions: logged-in, read-only access-control testing ---- */
+let sessSeq=0;
+function sessionRow(data){
+  data=data||{};
+  const i=++sessSeq;
+  const el=document.createElement('div'); el.className='sess';
+  el.innerHTML=
+    '<span class="sess-tag">session '+i+'</span>'+
+    '<button class="sess-x" title="remove session" type="button">×</button>'+
+    '<div class="sess-grid">'+
+      '<div><label class="lab">label</label><input type="text" class="s-name" placeholder="e.g. admin" autocomplete="off" spellcheck="false"></div>'+
+      '<div><label class="lab">privilege level</label><select class="s-level">'+
+        '<option value="0">anonymous (0)</option>'+
+        '<option value="10" selected>user (10)</option>'+
+        '<option value="50">manager (50)</option>'+
+        '<option value="100">admin (100)</option>'+
+      '</select></div>'+
+      '<div class="wide"><label class="lab">cookie</label><input type="text" class="s-cookie" placeholder="session=...; csrftoken=..." autocomplete="off" spellcheck="false"></div>'+
+      '<div class="wide"><label class="lab">auth header (optional)</label><input type="text" class="s-header" placeholder="Authorization: Bearer ..." autocomplete="off" spellcheck="false"></div>'+
+      '<div class="wide"><label class="lab">owned object ids (optional, comma-separated)</label><input type="text" class="s-owned" placeholder="1001, 1002" autocomplete="off" spellcheck="false"></div>'+
+    '</div>';
+  if(data.name!==undefined)el.querySelector('.s-name').value=data.name;
+  el.querySelector('.sess-x').addEventListener('click',()=>{ el.remove(); });
+  $('#sessions').appendChild(el);
+  return el;
+}
+function collectSessions(){
+  const out=[];
+  document.querySelectorAll('#sessions .sess').forEach(el=>{
+    const cookie=el.querySelector('.s-cookie').value.trim();
+    const header=el.querySelector('.s-header').value.trim();
+    if(!cookie && !header)return; // empty row, skip
+    out.push({
+      name:el.querySelector('.s-name').value.trim(),
+      level:parseInt(el.querySelector('.s-level').value)||0,
+      cookie:cookie,
+      header:header,
+      owned_ids:el.querySelector('.s-owned').value.split(',').map(s=>s.trim()).filter(Boolean)
+    });
+  });
+  return out;
+}
+$('#addSession').addEventListener('click',()=>sessionRow());
+sessionRow({name:'admin'}); // start with one row ready
 $('#url').addEventListener('keydown',e=>{if(e.key==='Enter'&&!running&&!$('#scan').disabled)runScan();});
 
 $('#scan').addEventListener('click',()=>{ if(running){ controller&&controller.abort(); } else { runScan(); } });
@@ -542,10 +617,11 @@ async function runScan(){
   let total=1,done=0; controller=new AbortController();
   const body=JSON.stringify({url:$('#url').value.trim(),authorized:$('#authz').checked,
     rate:parseFloat($('#rate').value)||12,max_requests:parseInt($('#maxreq').value)||1500,
-    active:$('#active').checked,cookie:$('#cookie').value.trim(),checks:[...selected],
+    active:$('#active').checked,cookie:'',checks:[...selected],
     max_role_guesses:parseInt($('#roleGuesses').value)||14,
     auto_idor:$('#autoIdor').checked,
-    idor_depth:parseInt($('#idorDepth').value)||4});
+    idor_depth:parseInt($('#idorDepth').value)||4,
+    sessions:collectSessions()});
   let stopped=false;
   try{
     const res=await fetch('/api/scan',{method:'POST',headers:H,body,signal:controller.signal});

@@ -1,18 +1,27 @@
-## Breakero v1.10.0
+## Breakero v1.11.0
 
-### Native on Apple Silicon — no more Rosetta
+### Test behind the login
 
-The macOS download is now a universal binary. One file, but it contains both
-Apple Silicon (arm64) and Intel (x86_64) code, so it runs **natively** on an
-M1/M2/M3 Mac. No Rosetta, nothing extra to install, and none of the storage
-Rosetta takes up. Intel Macs still run it natively too.
+Many access-control bugs only appear once you're signed in. The app now has a
+**post-login sessions** panel: paste one or more logged-in sessions — a cookie
+and/or an auth header, with a privilege level and, optionally, the object ids
+each account owns — and Breakero scans *behind* the login.
 
-Nothing changes about how you use it: download `breakero-darwin-universal`,
-make it runnable, and open it. The release still ships just three files.
+With two sessions it compares them to find the two classic authenticated bugs:
 
-Everything from 1.9.x is included: built-in role/IDOR dictionaries and in-app
-sliders (IDOR and privilege coverage from a pasted URL, no config), the
-enterprise HTML and PDF report, and the upload test-image generator.
+- **Vertical privilege escalation** — a low-privilege session reaching a page or
+  action that should need a higher role (a normal user opening `/admin`). This
+  now works with no config file, against the built-in sensitive-path list.
+- **Cross-account IDOR / BOLA** — one session reading another account's objects
+  by id.
+
+It stays strictly **read-only**: it only sends GET requests to see what each
+session can reach, and reports it. It never changes or extracts data. Use it only
+on systems you own or are authorized to test — a deliberately vulnerable lab
+(OWASP Juice Shop, PortSwigger Web Security Academy, DVWA) is the place to learn.
+
+The old single "session cookie" field moved into this panel, which now supports
+several sessions and auth headers.
 
 ### Downloads
 

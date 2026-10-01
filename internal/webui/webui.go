@@ -223,17 +223,30 @@ func (s *Server) handleQuit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// sessionInput is one logged-in identity the app can test behind a login. It is
+// read-only authenticated testing: the scan sends requests AS this session to
+// detect broken access control (cross-user IDOR, privilege escalation), never to
+// extract data.
+type sessionInput struct {
+	Name     string   `json:"name"`
+	Cookie   string   `json:"cookie"`
+	Header   string   `json:"header"` // one "Name: Value" header, optional
+	Level    int      `json:"level"`  // privilege: higher = more. 0 = anonymous.
+	OwnedIDs []string `json:"owned_ids"`
+}
+
 type scanRequest struct {
-	URL            string   `json:"url"`
-	Authorized     bool     `json:"authorized"`
-	Rate           float64  `json:"rate"`
-	MaxRequests    int      `json:"max_requests"`
-	Active         bool     `json:"active"`
-	Cookie         string   `json:"cookie"`
-	Checks         []string `json:"checks"`
-	MaxRoleGuesses int      `json:"max_role_guesses"`
-	AutoIDOR       bool     `json:"auto_idor"`
-	IDORDepth      int      `json:"idor_depth"`
+	URL            string         `json:"url"`
+	Authorized     bool           `json:"authorized"`
+	Rate           float64        `json:"rate"`
+	MaxRequests    int            `json:"max_requests"`
+	Active         bool           `json:"active"`
+	Cookie         string         `json:"cookie"`
+	Checks         []string       `json:"checks"`
+	MaxRoleGuesses int            `json:"max_role_guesses"`
+	AutoIDOR       bool           `json:"auto_idor"`
+	IDORDepth      int            `json:"idor_depth"`
+	Sessions       []sessionInput `json:"sessions"`
 }
 
 func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
@@ -264,8 +277,37 @@ func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
 	if cfg.MaxRequests <= 0 {
 		cfg.MaxRequests = 1500
 	}
+	// Build the authenticated identities to test as. Each becomes a role; the
+	// IDOR and privilege-escalation checks compare them. Legacy single cookie
+	// field still works as one "user" session.
 	if strings.TrimSpace(req.Cookie) != "" {
-		cfg.Roles = append(cfg.Roles, config.Role{Name: "user", Level: 10, Cookie: req.Cookie})
+		cfg.Roles = append(cfg.Roles, config.Role{Name: "user", Level: 10, Cookie: strings.TrimSpace(req.Cookie)})
+	}
+	for i, s := range req.Sessions {
+		if strings.TrimSpace(s.Cookie) == "" && strings.TrimSpace(s.Header) == "" {
+			continue // an empty session row
+		}
+		name := strings.TrimSpace(s.Name)
+		if name == "" {
+			name = fmt.Sprintf("session-%d", i+1)
+		}
+		role := config.Role{
+			Name:     name,
+			Level:    s.Level,
+			Cookie:   strings.TrimSpace(s.Cookie),
+			OwnedIDs: cleanIDs(s.OwnedIDs),
+		}
+		if h := strings.TrimSpace(s.Header); h != "" {
+			if k, v, ok := strings.Cut(h, ":"); ok {
+				role.Headers = map[string]string{strings.TrimSpace(k): strings.TrimSpace(v)}
+			}
+		}
+		cfg.Roles = append(cfg.Roles, role)
+	}
+	// With any authenticated session present, add an anonymous baseline so the
+	// privilege checks can tell "a lower identity reached a privileged area".
+	if len(cfg.Roles) > 0 && !hasAnonymous(cfg.Roles) {
+		cfg.Roles = append(cfg.Roles, config.Role{Name: "anonymous", Level: 0})
 	}
 
 	// NDJSON stream: one JSON object per line, flushed as it happens.
@@ -332,6 +374,27 @@ func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
 		"requests":   res.Requests,
 		"durationMs": res.Duration().Milliseconds(),
 	})
+}
+
+// cleanIDs trims and drops empty object ids supplied for a session.
+func cleanIDs(ids []string) []string {
+	var out []string
+	for _, id := range ids {
+		if v := strings.TrimSpace(id); v != "" {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+// hasAnonymous reports whether an anonymous (level 0) identity is already present.
+func hasAnonymous(roles []config.Role) bool {
+	for _, r := range roles {
+		if r.Level == 0 || strings.EqualFold(r.Name, "anonymous") {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Server) handleReportHTML(w http.ResponseWriter, r *http.Request) {

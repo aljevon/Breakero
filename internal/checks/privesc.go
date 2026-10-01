@@ -32,18 +32,20 @@ func (c *PrivEscCheck) Run(ctx *Context) ([]finding.Finding, error) {
 	cfg := ctx.Config
 	roles := cfg.SortedRolesByLevel()
 	if len(roles) < 2 {
-		ctx.Log.Printf("[privesc] skipped: needs at least 2 roles (define roles with different levels)")
+		ctx.Log.Printf("[privesc] skipped: needs at least 2 sessions/roles with different levels")
 		return nil, nil
 	}
-	if len(cfg.Endpoints) == 0 {
-		ctx.Log.Printf("[privesc] skipped: needs configured endpoints with min_role set")
-		return nil, nil
-	}
+
+	// Compare roles against configured endpoints, or against the built-in
+	// sensitive-path list when none are configured. The latter is what lets a
+	// post-login scan (two sessions, no config file) find vertical privilege
+	// escalation on common admin paths out of the box.
+	endpoints := endpointsOrDefault(cfg)
 
 	top := roles[len(roles)-1]
 	var out []finding.Finding
 
-	for _, ep := range cfg.Endpoints {
+	for _, ep := range endpoints {
 		if ctx.Client.BudgetExceeded() {
 			return out, nil
 		}

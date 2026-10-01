@@ -52,6 +52,7 @@ Prefer the command line? That still works too, same engine underneath. See [Quic
 - [Quick start](#quick-start)
 - [What it checks](#what-it-checks)
 - [Roles and IDOR, no config needed](#roles-and-idor-no-config-needed)
+- [Post-login (authenticated) testing](#post-login-authenticated-testing)
 - [Upload test images](#upload-test-images)
 - [Sample report](#sample-report)
 - [Config file](#config-file)
@@ -221,6 +222,24 @@ Two elegant sliders in the app's Advanced panel tune it, no file to edit:
 </div>
 
 The defaults are tuned so a beginner just presses Scan. A [config file](#config-file) is still there for the deeper case, where you want to test as specific logged-in accounts and compare them.
+
+## Post-login (authenticated) testing
+
+A lot of access-control bugs only show up once you're logged in. The **post-login sessions** panel lets you paste one or more logged-in sessions — a cookie and/or an auth header — so Breakero tests *behind* the login, not just the public surface.
+
+Give each session a label, a privilege level, its cookie (and optionally an `Authorization:` header and the object ids it legitimately owns), then scan. With two sessions Breakero compares them to find:
+
+- **Vertical privilege escalation** — a low-privilege session reaching a page or action that should need a higher role (e.g. a normal user opening `/admin`).
+- **Cross-account IDOR / BOLA** — one session reading another account's objects by id.
+
+It stays **read-only**: it only sends GET requests to see what each session can reach, and reports it. It never changes or extracts data. Use it only on systems you own or are authorized to test — a lab (OWASP Juice Shop, PortSwigger Academy, DVWA) is the place to practice.
+
+> [!TIP]
+> For vertical testing, add a low-privilege session **and** an admin session. For cross-account IDOR, add two peer accounts and fill in the object ids each one owns.
+
+<div align="center">
+  <img src="assets/post-login.png" alt="The post-login sessions panel" width="820">
+</div>
 
 ## Upload test images
 
